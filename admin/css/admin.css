@@ -1,0 +1,86 @@
+/**
+ * GrabWP Tenancy Admin Styles - Minimal
+ * 
+ * @package GrabWP_Tenancy
+ * @since 1.0.0
+ */
+
+/* Status indicators */
+.grabwp-status-active {
+    color: #46b450;
+    font-weight: bold;
+}
+
+.grabwp-status-inactive {
+    color: #dc3232;
+    font-weight: bold;
+}
+
+/* Domain inputs for JavaScript */
+.grabwp-domain-inputs,
+.grabwp-edit-domain-inputs {
+    margin: 10px 0;
+}
+
+.grabwp-domain-input,
+.grabwp-edit-domain-input {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.grabwp-domain-input input,
+.grabwp-edit-domain-input input {
+    flex: 1;
+    margin-right: 10px;
+}
+
+/* Form styling improvements */
+.grabwp-tenancy-content {
+    margin-top: 20px;
+}
+
+.grabwp-tenancy-form {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 3px;
+}
+
+.grabwp-tenancy-form h3 {
+    margin-top: 0;
+    color: #23282d;
+}
+
+/* Button styling */
+.grabwp-add-domain,
+.grabwp-add-edit-domain {
+    margin-top: 10px !important;
+}
+
+.grabwp-remove-domain,
+.grabwp-remove-edit-domain {
+    background: #dc3232 !important;
+    border-color: #dc3232 !important;
+    color: #fff !important;
+}
+
+.grabwp-remove-domain:hover,
+.grabwp-remove-edit-domain:hover {
+    background: #a00 !important;
+    border-color: #a00 !important;
+}
+
+/* Table improvements */
+.wp-list-table .grabwp-status-active,
+.wp-list-table .grabwp-status-inactive {
+    font-weight: bold;
+}
+
+.wp-list-table code {
+    background: #f0f0f0;
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-size: 12px;
+} 
