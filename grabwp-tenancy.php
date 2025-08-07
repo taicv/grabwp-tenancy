@@ -127,10 +127,10 @@ final class GrabWP_Tenancy {
     private function init_hooks() {
         add_action( 'plugins_loaded', array( $this, 'on_plugins_loaded' ) );
         add_action( 'init', array( $this, 'init' ) );
-        
+
         // Activation and deactivation hooks
-        register_activation_hook( __FILE__, array( $this, 'activate' ) );
-        register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
+        require_once __DIR__ . '/includes/class-grabwp-tenancy-installer.php';
+        // Removed activation/deactivation hook registration from here
     }
     
     /**
@@ -219,11 +219,10 @@ final class GrabWP_Tenancy {
      * @since 1.0.0
      */
     public function activate() {
-        // Create necessary directories
-        $this->create_directories();
-        
-        // Create default tenant mappings file
-        $this->create_tenant_mappings_file();
+        // Run installer activation logic first
+        if ( class_exists( 'GrabWP_Tenancy_Installer' ) ) {
+            GrabWP_Tenancy_Installer::activate();
+        }
         
         // Flush rewrite rules
         flush_rewrite_rules();
@@ -243,51 +242,6 @@ final class GrabWP_Tenancy {
         
         // Allow pro plugin to extend deactivation
         do_action( 'grabwp_tenancy_deactivate' );
-    }
-    
-    /**
-     * Create necessary directories
-     * 
-     * @since 1.0.0
-     */
-    private function create_directories() {
-        $grabwp_dir = WP_CONTENT_DIR . '/grabwp';
-        
-        if ( ! file_exists( $grabwp_dir ) ) {
-            $result = wp_mkdir_p( $grabwp_dir );
-            if ( ! $result ) {
-                // Handle directory creation failure silently
-                // Directory creation failure will be handled by the calling code
-            }
-        }
-    }
-    
-    /**
-     * Create default tenant mappings file
-     * 
-     * @since 1.0.0
-     */
-    private function create_tenant_mappings_file() {
-        $mappings_file = WP_CONTENT_DIR . '/grabwp/tenants.php';
-        
-        if ( ! file_exists( $mappings_file ) ) {
-            $content = "<?php\n";
-            $content .= "/**\n";
-            $content .= " * Tenant Domain Mappings\n";
-            $content .= " * \n";
-            $content .= " * This file contains domain mappings for tenant identification.\n";
-            $content .= " * Format: \$tenant_mappings['tenant_id'] = array( 'domain1', 'domain2' );\n";
-            $content .= " */\n\n";
-            $content .= "\$tenant_mappings = array(\n";
-            $content .= "    // Example: 'abc123' => array( 'tenant1.grabwp.local' ),\n";
-            $content .= ");\n";
-            
-            $result = file_put_contents( $mappings_file, $content );
-            if ( false === $result ) {
-                // Handle file creation failure silently
-                // File creation failure will be handled by the calling code
-            }
-        }
     }
     
     /**
@@ -339,4 +293,6 @@ function grabwp_tenancy() {
 }
 
 // Initialize plugin
-grabwp_tenancy(); 
+$grabwp_tenancy_instance = grabwp_tenancy();
+register_activation_hook(__FILE__, array($grabwp_tenancy_instance, 'activate'));
+register_deactivation_hook(__FILE__, array($grabwp_tenancy_instance, 'deactivate')); 

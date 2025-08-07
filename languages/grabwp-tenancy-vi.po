@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/grabwp-tenancy\n"
 "POT-Creation-Date: 2025-08-07T08:49:39+00:00\n"
-"PO-Revision-Date: 2025-08-07 16:36+0700\n"
+"PO-Revision-Date: 2025-08-07 17:11+0700\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: vi\n"
@@ -253,7 +253,7 @@ msgstr "Thêm mới"
 
 #: admin/views/tenants.php:22
 msgid "Manage your multi-tenant WordPress sites."
-msgstr "Quản lý các website WordPress đa tenant."
+msgstr "Quản lý các tenant (site con)."
 
 #: admin/views/tenants.php:28
 msgid "No Tenants Found"
