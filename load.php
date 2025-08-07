@@ -13,6 +13,7 @@
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+define( 'GRABWP_TENANCY_LOADED', true );
 
 /**
  * Get sanitized HTTP host

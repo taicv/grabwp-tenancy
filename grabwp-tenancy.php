@@ -133,6 +133,7 @@ final class GrabWP_Tenancy {
         require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-loader.php';
         require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-tenant.php';
         require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-admin.php';
+        require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-admin-notice.php';
     }
     
     /**
@@ -148,6 +149,7 @@ final class GrabWP_Tenancy {
         // Initialize components
         $this->init_loader();
         $this->init_admin();
+        GrabWP_Tenancy_Admin_Notice::register();
         
         // Allow pro plugin to extend
         do_action( 'grabwp_tenancy_init', $this );
