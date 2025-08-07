@@ -31,6 +31,16 @@ define( 'GRABWP_TENANCY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'GRABWP_TENANCY_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 
 /**
+ * Load plugin text domain for translations
+ *
+ * @since 1.0.0
+ */
+function grabwp_tenancy_load_textdomain() {
+    load_plugin_textdomain( 'grabwp-tenancy', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' ); // phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound
+}
+add_action( 'plugins_loaded', 'grabwp_tenancy_load_textdomain' );
+
+/**
  * Main GrabWP Tenancy Plugin Class
  * 
  * @since 1.0.0
