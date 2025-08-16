@@ -58,9 +58,14 @@ class GrabWP_Tenancy_Admin {
     }
     
     /**
-     * Handle form submissions before any output
+     * Handle form submissions before any output - only on main site
      */
     public function handle_form_submissions() {
+        // Don't handle form submissions on tenant sites
+        if ( $this->plugin->is_tenant() ) {
+            return;
+        }
+        
         // Check capabilities first
         if ( ! current_user_can( 'manage_options' ) ) {
             return;
@@ -148,9 +153,14 @@ class GrabWP_Tenancy_Admin {
     }
     
     /**
-     * Add admin menu
+     * Add admin menu - only on main site, not on tenant sites
      */
     public function add_admin_menu() {
+        // Don't show admin UI on tenant sites
+        if ( $this->plugin->is_tenant() ) {
+            return;
+        }
+        
         add_menu_page(
             __( 'GrabWP Tenancy', 'grabwp-tenancy' ),
             __( 'Tenancy', 'grabwp-tenancy' ),
@@ -200,9 +210,14 @@ class GrabWP_Tenancy_Admin {
     }
     
     /**
-     * Enqueue admin scripts and styles
+     * Enqueue admin scripts and styles - only on main site
      */
     public function enqueue_admin_scripts( $hook ) {
+        // Don't load admin assets on tenant sites
+        if ( $this->plugin->is_tenant() ) {
+            return;
+        }
+        
         if ( strpos( $hook, 'grabwp-tenancy' ) === false ) {
             return;
         }
@@ -744,9 +759,14 @@ class GrabWP_Tenancy_Admin {
     }
     
     /**
-     * Admin notices
+     * Admin notices - only on main site
      */
     public function admin_notices() {
+        // Don't show admin notices on tenant sites
+        if ( $this->plugin->is_tenant() ) {
+            return;
+        }
+        
         // Show notices for admin pages
         $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
         if ( $page && strpos( $page, 'grabwp-tenancy' ) !== false ) {

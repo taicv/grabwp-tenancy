@@ -62,6 +62,26 @@ if ( ! defined( 'ABSPATH' ) ) {
                                 <?php endif; ?>
                             </td>
                             <td>
+                                <?php if ( ! empty( $tenant->get_domains() ) ) : ?>
+                                    <a href="<?php echo esc_url( ( is_ssl() ? 'https://' : 'http://' ) . $tenant->get_domains()[0] ); ?>" target="_blank" class="button button-primary">
+                                        <?php esc_html_e( 'Visit Site', 'grabwp-tenancy' ); ?>
+                                    </a>
+                                    <?php 
+                                    $admin_url = null;
+                                    if ( method_exists( $tenant, 'get_admin_access_url' ) ) {
+                                        $admin_url = $tenant->get_admin_access_url();
+                                    }
+                                    if ( $admin_url ) : 
+                                    ?>
+                                        <a href="<?php echo esc_url( $admin_url ); ?>" target="_blank" class="button">
+                                            <?php esc_html_e( 'Visit Admin', 'grabwp-tenancy' ); ?>
+                                        </a>
+                                    <?php else : ?>
+                                        <a href="<?php echo esc_url( ( is_ssl() ? 'https://' : 'http://' ) . $tenant->get_domains()[0] . '/wp-admin/' ); ?>" target="_blank" class="button">
+                                            <?php esc_html_e( 'Visit Admin', 'grabwp-tenancy' ); ?>
+                                        </a>
+                                    <?php endif; ?>
+                                <?php endif; ?>
                                 <a href="<?php echo esc_url( admin_url( 'admin.php?page=grabwp-tenancy-edit&tenant_id=' . urlencode( $tenant->get_id() ) . '&_wpnonce=' . urlencode( wp_create_nonce( 'grabwp_tenancy_edit' ) ) ) ); ?>" class="button">
                                     <?php esc_html_e( 'Edit', 'grabwp-tenancy' ); ?>
                                 </a>

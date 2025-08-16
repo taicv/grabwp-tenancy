@@ -146,7 +146,11 @@ function grabwp_tenancy_identify_tenant( $domain, $mappings ) {
  * @param string $tenant_id Tenant identifier
  */
 function grabwp_tenancy_set_tenant_context( $tenant_id ) {
-    if ( grabwp_tenancy_validate_tenant_id( $tenant_id ) ) {
+    if(defined('GRABWP_TENANCY_TENANT_ID')){
+        define( 'GRABWP_TENANCY_IS_TENANT', true );
+        return;
+    }
+    else if ( grabwp_tenancy_validate_tenant_id( $tenant_id ) ) {
         define( 'GRABWP_TENANCY_TENANT_ID', $tenant_id );
         define( 'GRABWP_TENANCY_IS_TENANT', true );
     } else {
@@ -174,6 +178,9 @@ function grabwp_tenancy_set_database_prefix( $tenant_id ) {
     
     // Set tenant-specific prefix
     $table_prefix = $tenant_id . '_';
+    if ( ! defined( 'GRABWP_TENANCY_TABLE_PREFIX' ) ) {
+        define( 'GRABWP_TENANCY_TABLE_PREFIX', $table_prefix );
+    }
 }
 
 /**
@@ -188,12 +195,8 @@ function grabwp_tenancy_set_content_paths( $tenant_id ) {
     
     $content_dir = grabwp_tenancy_get_content_dir();
     $upload_dir = $content_dir . '/grabwp/' . $tenant_id . '/uploads';
-    
-    // Create directory if it doesn't exist
-    if ( ! file_exists( $upload_dir ) && ! is_dir( $upload_dir ) ) {
-        wp_mkdir_p( $upload_dir );
-    }
-    
+
+    // Do NOT create directory here; defer to loader class after WP loads
     // Set upload directory constant
     define( 'GRABWP_TENANCY_UPLOAD_DIR', $upload_dir );
     
@@ -221,29 +224,65 @@ function grabwp_tenancy_configure_tenant( $tenant_id ) {
  * Early tenant identification and configuration
  * 
  * This function follows the domain routing flow:
- * 1. Extract domain from HTTP request
- * 2. Load tenant mappings from file
- * 3. Search for tenant by domain
- * 4. Set tenant context and configure isolation
+ * 1. Check for pre-defined tenant ID (from --exec)
+ * 2. Load tenant mappings and get current domain
+ * 3. Set tenant context and configure isolation
+ * 
+ * If no tenant is detected, the function does nothing.
  */
 function grabwp_tenancy_early_init() {
-    // Step 1: Extract domain from HTTP request
-    $current_domain = grabwp_tenancy_get_http_host();
+    global $table_prefix;
+    $tenant_id = null;
+    $current_domain = '';
     
-    // Step 2: Load tenant mappings from file
-    $tenant_mappings = grabwp_tenancy_load_tenant_mappings();
-    
-    // Step 3: Search for tenant by domain
-    $tenant_id = grabwp_tenancy_identify_tenant( $current_domain, $tenant_mappings );
-    
-    // Step 4: Define WordPress constants with proper domain context
-    grabwp_tenancy_define_wordpress_constants( $current_domain );
-    
-    // Step 5: Set tenant context
-    grabwp_tenancy_set_tenant_context( $tenant_id );
-    
-    // Step 6: Configure tenant-specific settings if tenant found
-    if ( $tenant_id ) {
+    // Step 1: Check for pre-defined tenant ID (from --exec)
+    if ( defined( 'GRABWP_TENANCY_TENANT_ID' ) && GRABWP_TENANCY_TENANT_ID !== '' ) {
+        $tenant_id = GRABWP_TENANCY_TENANT_ID;
+        // Set debug & Upload constants 
+        if ( !defined('DISALLOW_FILE_MODS') ) {
+            define('DISALLOW_FILE_MODS', false );
+        }
+        if ( !defined('WP_DEBUG') ) {
+            define('WP_DEBUG', false );
+        }
+        if ( !defined('WP_DEBUG_LOG') ) {
+            define('WP_DEBUG_LOG', true );
+        }
+        if ( !defined('WP_DEBUG_DISPLAY') ) {
+            define('WP_DEBUG_DISPLAY', false );
+        }
+        
+        // Get current domain from mappings for CLI
+        $tenant_mappings = grabwp_tenancy_load_tenant_mappings();
+        
+        if ( isset( $tenant_mappings[ $tenant_id ] ) && ! empty( $tenant_mappings[ $tenant_id ][0] ) ) {
+            $current_domain = $tenant_mappings[ $tenant_id ][0]; // Primary domain
+        } else {
+            $current_domain = $tenant_id . '.grabwp.local'; // Fallback domain
+        }
+    } else {
+        // Step 2: Extract domain from HTTP request
+        $current_domain = grabwp_tenancy_get_http_host();
+        
+        // Step 3: Load tenant mappings from file
+        $tenant_mappings = grabwp_tenancy_load_tenant_mappings();
+        
+        // Step 4: Search for tenant by domain
+        $tenant_id = grabwp_tenancy_identify_tenant( $current_domain, $tenant_mappings );
+    }
+
+    // If no tenant is detected, do nothing
+    if ( ! $tenant_id ) {
+        return;
+    }else{
+
+        // Step 5: Define WordPress constants with proper domain context
+        grabwp_tenancy_define_wordpress_constants( $current_domain );
+        
+        // Step 6: Set tenant context
+        grabwp_tenancy_set_tenant_context( $tenant_id );
+        
+        // Step 7: Configure tenant-specific settings
         grabwp_tenancy_configure_tenant( $tenant_id );
     }
 }

@@ -262,4 +262,142 @@ class GrabWP_Tenancy_Tenant {
             'is_active' => $this->is_active(),
         );
     }
+
+    /**
+     * Generate domain hash for token security
+     * 
+     * @param string $domain Domain name
+     * @param string $tenant_id Tenant ID
+     * @return string Hash
+     */
+    public static function generate_domain_hash( $domain, $tenant_id ) {
+        // Normalize domain (lowercase, remove www)
+        $normalized_domain = strtolower( $domain );
+        $normalized_domain = preg_replace( '/^www\./', '', $normalized_domain );
+        
+        // Generate secure hash using domain + tenant_id + WordPress salt
+        return hash( 'sha256', $normalized_domain . $tenant_id . AUTH_SALT );
+    }
+    
+    /**
+     * Generate or get global admin access token
+     * 
+     * @return string|false Token on success, false on failure
+     */
+    public static function get_global_admin_token() {
+        $tokens_dir = WP_CONTENT_DIR . '/grabwp/';
+        $config_file = $tokens_dir . 'tokens.php';
+        
+        // Check if valid token exists
+        if ( file_exists( $config_file ) ) {
+            $admin_token = null;
+            include $config_file;
+            
+            if ( isset( $admin_token ) && 
+                 isset( $admin_token['token'] ) && 
+                 isset( $admin_token['expires'] ) &&
+                 $admin_token['expires'] > time() ) {
+                return $admin_token['token'];
+            }
+        }
+        
+        // Generate new token if none exists or expired
+        $token = wp_generate_password( 32, false );
+        
+        // Store token with expiration (24 hours)
+        $token_data = array(
+            'token' => $token,
+            'expires' => time() + ( 24 * 60 * 60 ), // 24 hours
+            'generated' => current_time( 'timestamp' )
+        );
+        
+        // Ensure directory exists
+        if ( ! is_dir( $tokens_dir ) ) {
+            wp_mkdir_p( $tokens_dir );
+        }
+        
+        $content = "<?php\n";
+        $content .= "// Global admin access token for all tenants\n";
+        $content .= "// Generated: " . gmdate( 'Y-m-d H:i:s' ) . " UTC\n";
+        $content .= "// Expires: " . gmdate( 'Y-m-d H:i:s', $token_data['expires'] ) . " UTC\n";
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export -- Intentional serialization for config file generation
+        $content .= "\$admin_token = " . var_export( $token_data, true ) . ";\n";
+        
+        if ( file_put_contents( $config_file, $content ) ) {
+            return $token;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get admin access URL with token and hash
+     * 
+     * @return string|false URL on success, false on failure
+     */
+    public function get_admin_access_url() {
+        $token = self::get_global_admin_token();
+        
+        if ( ! $token || empty( $this->domains ) ) {
+            return false;
+        }
+        
+        $primary_domain = $this->domains[0];
+        $protocol = is_ssl() ? 'https' : 'http';
+        
+        // Generate domain hash for additional security
+        $hash = self::generate_domain_hash( $primary_domain, $this->id );
+        
+        return $protocol . '://' . $primary_domain . '/wp-admin/?grabwp_token=' . $token . '&grabwp_hash=' . $hash;
+    }
+    
+    /**
+     * Validate admin token and domain hash
+     * 
+     * @param string $token Token to validate
+     * @param string $hash Hash to validate (optional for backward compatibility)
+     * @return bool True if valid, false otherwise
+     */
+    public static function validate_admin_token( $token, $hash = '' ) {
+        if ( empty( $token ) ) {
+            return false;
+        }
+        
+        // Check global token file
+        $config_file = WP_CONTENT_DIR . '/grabwp/tokens.php';
+        if ( ! file_exists( $config_file ) ) {
+            return false;
+        }
+        
+        $admin_token = null;
+        include $config_file;
+        
+        // Validate token first
+        if ( ! isset( $admin_token ) || 
+             ! isset( $admin_token['token'] ) ||
+             ! isset( $admin_token['expires'] ) ||
+             $admin_token['token'] !== $token || 
+             $admin_token['expires'] <= time() ) {
+            return false;
+        }
+        
+        // If hash is provided, validate it (enhanced security)
+        if ( ! empty( $hash ) ) {
+            // Get current domain and tenant ID
+            $current_domain = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+            $tenant_id = defined( 'GRABWP_TENANCY_TENANT_ID' ) ? GRABWP_TENANCY_TENANT_ID : '';
+            
+            if ( empty( $current_domain ) || empty( $tenant_id ) ) {
+                return false;
+            }
+            
+            // Generate expected hash and compare
+            $expected_hash = self::generate_domain_hash( $current_domain, $tenant_id );
+            if ( $hash !== $expected_hash ) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
 } 

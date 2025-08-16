@@ -41,6 +41,11 @@ class GrabWP_Tenancy_Loader {
      * Initialize hooks
      */
     private function init_hooks() {
+        // Admin access token handling - early priority for tenant sites
+        if ( $this->plugin->is_tenant() ) {
+            add_action( 'init', array( $this, 'handle_admin_token' ), 5 );
+        }
+        
         // Content path management
         add_filter( 'upload_dir', array( $this, 'filter_upload_dir' ), 10, 1 );
         add_filter( 'wp_upload_dir', array( $this, 'filter_upload_dir' ), 10, 1 );
@@ -196,5 +201,131 @@ class GrabWP_Tenancy_Loader {
         // If filesystem API is not available, return false
         // This ensures we don't use direct PHP filesystem calls
         return false;
+    }
+    
+    /**
+     * Handle admin access token for auto-login on tenant sites
+     */
+    public function handle_admin_token() {
+        // Only handle on login page or admin pages
+        if ( ! is_admin() && ! $this->is_login_page() ) {
+            return;
+        }
+        
+        // Only process on tenant sites
+        if ( ! $this->plugin->is_tenant() ) {
+            return;
+        }
+        
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Token-based authentication, not form submission
+        $token = isset( $_GET['grabwp_token'] ) ? sanitize_text_field( wp_unslash( $_GET['grabwp_token'] ) ) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Token-based authentication, not form submission
+        $hash = isset( $_GET['grabwp_hash'] ) ? sanitize_text_field( wp_unslash( $_GET['grabwp_hash'] ) ) : '';
+        
+        if ( empty( $token ) ) {
+            return;
+        }
+        
+        // Validate global token and hash using tenant class methods
+        $is_valid_token = GrabWP_Tenancy_Tenant::validate_admin_token( $token, $hash );
+        if ( ! $is_valid_token ) {
+            $this->handle_token_error( 'Invalid or expired admin access token.' );
+            return;
+        }
+        
+        // Get tenant ID
+        $tenant_id = $this->plugin->get_tenant_id();
+        if ( ! $tenant_id ) {
+            $this->handle_token_error( 'Tenant identification failed.' );
+            return;
+        }
+        
+        // Get admin user with lowest ID
+        $admin_user = $this->get_lowest_admin_user();
+        if ( ! $admin_user ) {
+            $this->handle_token_error( 'No admin user found for tenant access.' );
+            return;
+        }
+        
+        // Log the user in
+        wp_set_current_user( $admin_user->ID, $admin_user->user_login );
+        wp_set_auth_cookie( $admin_user->ID, true );
+        
+        // Redirect to wp-admin to remove token from URL
+        wp_redirect( admin_url() );
+        exit;
+    }
+    
+    /**
+     * Handle token authentication errors gracefully
+     * 
+     * @param string $message Error message to display
+     */
+    private function handle_token_error( $message ) {
+        // Add admin notice for next page load
+        add_option( 'grabwp_tenancy_token_error', $message );
+        
+        // Add hook to display notice
+        add_action( 'admin_notices', array( $this, 'display_token_error_notice' ) );
+        add_action( 'login_message', array( $this, 'display_login_error_message' ) );
+        
+        // Redirect to login page with error parameter
+        $login_url = wp_login_url();
+        $login_url = add_query_arg( 'grabwp_token_error', '1', $login_url );
+        
+        wp_redirect( $login_url );
+        exit;
+    }
+    
+    /**
+     * Display token error notice in admin
+     */
+    public function display_token_error_notice() {
+        $error = get_option( 'grabwp_tenancy_token_error' );
+        if ( $error ) {
+            echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $error ) . '</p></div>';
+            delete_option( 'grabwp_tenancy_token_error' );
+        }
+    }
+    
+    /**
+     * Display token error message on login page
+     * 
+     * @param string $message Existing login message
+     * @return string Modified login message
+     */
+    public function display_login_error_message( $message ) {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading error parameter for display purposes
+        if ( isset( $_GET['grabwp_token_error'] ) ) {
+            $error = get_option( 'grabwp_tenancy_token_error' );
+            if ( $error ) {
+                $message .= '<div id="login_error">' . esc_html( $error ) . '</div>';
+                delete_option( 'grabwp_tenancy_token_error' );
+            }
+        }
+        return $message;
+    }
+    
+    /**
+     * Check if current page is login page
+     */
+    private function is_login_page() {
+        return in_array( $GLOBALS['pagenow'], array( 'wp-login.php' ) );
+    }
+    
+    /**
+     * Get admin user with lowest ID
+     * 
+     * @return WP_User|false Admin user object or false if not found
+     */
+    private function get_lowest_admin_user() {
+        $admin_users = get_users( array(
+            'role' => 'administrator',
+            'orderby' => 'ID',
+            'order' => 'ASC',
+            'number' => 1
+        ) );
+        
+        return ! empty( $admin_users ) ? $admin_users[0] : false;
     }
 } 

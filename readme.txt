@@ -4,7 +4,7 @@ Tags: multi-tenant, tenancy, isolation, routing, domains
 Requires at least: 5.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,18 @@ The plugin is designed to be compatible with most WordPress plugins. However, pl
    `require_once __DIR__ . '/wp-content/plugins/grabwp-tenancy/load.php';`
 
 == Changelog ==
+
+= 1.0.2 =
+* Improved tenant management interface
+* Direct login button to tenant from main site admin (If plugin also activated on tenant)
+* No longer access to plugin admin page and menu from tenant's admin dashboard
+
+= 1.0.1 =
+* Refactored core plugin for improved tenant management and protocol handling
+* Added admin notice registration for better user feedback in the admin area
+* Defined GRABWP_TENANCY_LOADED constant for reliable plugin load detection
+* Added translation support by loading the plugin text domain on initialization
+* Added Vietnamese language support
 
 = 1.0.0 =
 * Initial release

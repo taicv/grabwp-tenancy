@@ -28,7 +28,7 @@ class GrabWP_Tenancy_Admin_Notice {
         }
         // Check if load.php is included
         if ( ! defined( 'GRABWP_TENANCY_LOADED' ) ) {
-            $snippet = 'require_once WP_CONTENT_DIR . "/plugins/grabwp-tenancy/load.php";';
+            $snippet = 'require_once __DIR__ . "/wp-content/plugins/grabwp-tenancy/load.php";';
             echo '<div class="notice notice-error"><p>'
                 . '<strong>GrabWP Tenancy:</strong> Plugin is activated but <code>load.php</code> is not included in <code>wp-config.php</code>.'
                 . '<br>Please add the following line before <code>/* That\'s all, stop editing! */</code> in <code>wp-config.php</code>:'
