@@ -6,6 +6,8 @@ Multi-tenant WordPress solution with shared MySQL and domain-based routing.
 
 GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential isolation features. This plugin focuses on cost-effective multi-tenancy with shared resources and basic tenant separation.
 
+**Available on WordPress.org**: [Download GrabWP Tenancy](https://wordpress.org/plugins/grabwp-tenancy/)
+
 ## Requirements
 
 - WordPress 5.0+
@@ -16,9 +18,20 @@ GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential
 
 ### Installation
 
-1. Upload `grabwp-tenancy` to `/wp-content/plugins/`
-2. Activate the plugin
-3. Add to `wp-config.php`:
+#### From WordPress.org (Recommended)
+1. Go to **Plugins > Add New** in your WordPress admin
+2. Search for "GrabWP Tenancy"
+3. Click **Install Now** and then **Activate**
+4. Add to `wp-config.php`:
+   ```php
+   require_once __DIR__ . '/wp-content/plugins/grabwp-tenancy/load.php';
+   ```
+
+#### Manual Installation
+1. Download from [WordPress.org](https://wordpress.org/plugins/grabwp-tenancy/)
+2. Upload `grabwp-tenancy` to `/wp-content/plugins/`
+3. Activate the plugin
+4. Add to `wp-config.php`:
    ```php
    require_once __DIR__ . '/wp-content/plugins/grabwp-tenancy/load.php';
    ```
@@ -28,10 +41,11 @@ GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential
 ### File Structure
 ```
 wp-content/
-├── grabwp/
-│   ├── tenants.php          # Domain mappings
-│   └── {tenant_id}/
-│       └── uploads/         # Isolated uploads per tenant
+├── uploads/
+│   └── grabwp-tenancy/
+│       ├── tenants.php      # Domain mappings
+│       └── {tenant_id}/
+│           └── uploads/     # Isolated uploads per tenant
 └── plugins/
     └── grabwp-tenancy/      # Base plugin
 ```
@@ -42,7 +56,7 @@ wp-content/
 
 ### Content Isolation
 - Shared themes and plugins
-- Isolated uploads per tenant (`wp-content/grabwp/{tenant_id}/uploads`)
+- Isolated uploads per tenant (`wp-content/uploads/grabwp-tenancy/{tenant_id}/uploads`)
 
 ## Tenant Structure
 
