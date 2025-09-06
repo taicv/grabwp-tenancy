@@ -1,22 +1,24 @@
 # Copyright (C) 2025 GrabWP
 # This file is distributed under the GPLv2 or later.
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: GrabWP Tenancy 1.0.0\n"
+"Project-Id-Version: GrabWP Tenancy 1.0.3\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/grabwp-tenancy\n"
+"POT-Creation-Date: 2025-09-07 00:19+0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-08-07T08:49:39+00:00\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.11.0\n"
+"X-Generator: Poedit 3.7\n"
 "X-Domain: grabwp-tenancy\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-SearchPath-0: .\n"
 
 #. Plugin Name of the plugin
-#: grabwp-tenancy.php
-#: admin/views/tenants.php:16
+#: grabwp-tenancy.php admin/views/tenants.php:16
 #: includes/class-grabwp-tenancy-admin.php:155
 #: includes/class-grabwp-tenancy-admin.php:276
 msgid "GrabWP Tenancy"
@@ -178,8 +180,7 @@ msgstr ""
 msgid "Required PHP Version"
 msgstr ""
 
-#: admin/views/tenant-create.php:16
-#: includes/class-grabwp-tenancy-admin.php:175
+#: admin/views/tenant-create.php:16 includes/class-grabwp-tenancy-admin.php:175
 msgid "Add New Tenant"
 msgstr ""
 
@@ -187,40 +188,32 @@ msgstr ""
 msgid "Create a new tenant with domain mappings."
 msgstr ""
 
-#: admin/views/tenant-create.php:38
-#: admin/views/tenant-edit.php:43
+#: admin/views/tenant-create.php:38 admin/views/tenant-edit.php:43
 #: admin/views/tenants.php:40
 msgid "Domains"
 msgstr ""
 
-#: admin/views/tenant-create.php:42
-#: admin/views/tenant-create.php:71
-#: admin/views/tenant-edit.php:51
-#: admin/views/tenant-edit.php:57
+#: admin/views/tenant-create.php:42 admin/views/tenant-create.php:71
+#: admin/views/tenant-edit.php:51 admin/views/tenant-edit.php:57
 #: admin/views/tenant-edit.php:85
 msgid "Enter domain (e.g., tenant1.grabwp.local)"
 msgstr ""
 
-#: admin/views/tenant-create.php:43
-#: admin/views/tenant-create.php:72
-#: admin/views/tenant-edit.php:52
-#: admin/views/tenant-edit.php:58
+#: admin/views/tenant-create.php:43 admin/views/tenant-create.php:72
+#: admin/views/tenant-edit.php:52 admin/views/tenant-edit.php:58
 #: admin/views/tenant-edit.php:86
 msgid "Remove"
 msgstr ""
 
-#: admin/views/tenant-create.php:47
-#: admin/views/tenant-edit.php:63
+#: admin/views/tenant-create.php:47 admin/views/tenant-edit.php:63
 msgid "Add Domain"
 msgstr ""
 
-#: admin/views/tenant-create.php:49
-#: admin/views/tenant-edit.php:65
+#: admin/views/tenant-create.php:49 admin/views/tenant-edit.php:65
 msgid "Enter at least one domain for this tenant. You can add multiple domains."
 msgstr ""
 
-#: admin/views/tenant-create.php:50
-#: admin/views/tenant-edit.php:66
+#: admin/views/tenant-create.php:50 admin/views/tenant-edit.php:66
 msgid "Valid format: example.com, subdomain.example.com (no http:// or www)"
 msgstr ""
 
@@ -228,13 +221,11 @@ msgstr ""
 msgid "Create Tenant"
 msgstr ""
 
-#: admin/views/tenant-create.php:59
-#: admin/views/tenant-edit.php:75
+#: admin/views/tenant-create.php:59 admin/views/tenant-edit.php:75
 msgid "Cancel"
 msgstr ""
 
-#: admin/views/tenant-edit.php:16
-#: includes/class-grabwp-tenancy-admin.php:185
+#: admin/views/tenant-edit.php:16 includes/class-grabwp-tenancy-admin.php:185
 #: includes/class-grabwp-tenancy-admin.php:186
 msgid "Edit Tenant"
 msgstr ""
@@ -243,8 +234,7 @@ msgstr ""
 msgid "Edit tenant domain mappings."
 msgstr ""
 
-#: admin/views/tenant-edit.php:39
-#: admin/views/tenants.php:38
+#: admin/views/tenant-edit.php:39 admin/views/tenants.php:38
 msgid "Tenant ID"
 msgstr ""
 
@@ -252,8 +242,7 @@ msgstr ""
 msgid "Update Tenant"
 msgstr ""
 
-#: admin/views/tenants.php:18
-#: includes/class-grabwp-tenancy-admin.php:176
+#: admin/views/tenants.php:18 includes/class-grabwp-tenancy-admin.php:176
 msgid "Add New"
 msgstr ""
 

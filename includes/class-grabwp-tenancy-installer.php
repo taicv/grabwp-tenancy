@@ -4,80 +4,149 @@
  * Handles plugin activation tasks (e.g., .htaccess creation)
  */
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 class GrabWP_Tenancy_Installer {
-    public static function activate() {
-        // Create .htaccess file for security
-        self::create_htaccess();
-        
-        // Create necessary directories
-        self::create_directories();
-        
-        // Create default tenant mappings file
-        self::create_tenant_mappings_file();
-    }
-    
-    /**
-     * Create .htaccess file to block web access
-     * 
-     * @since 1.0.0
-     */
-    private static function create_htaccess() {
-        $grabwp_dir = WP_CONTENT_DIR . '/grabwp';
-        $htaccess_file = $grabwp_dir . '/.htaccess';
-        $htaccess_content = "#GrabWP protection\nOptions -Indexes\n<FilesMatch \"\\.php$\">\n    <IfModule mod_authz_core.c>\n        Require all denied\n    </IfModule>\n    <IfModule !mod_authz_core.c>\n        Order allow,deny\n        Deny from all\n    </IfModule>\n</FilesMatch>\n<FilesMatch \"^\\.\">\n    <IfModule mod_authz_core.c>\n        Require all denied\n    </IfModule>\n    <IfModule !mod_authz_core.c>\n        Order allow,deny\n        Deny from all\n    </IfModule>\n</FilesMatch>\n";
+	public static function activate() {
+		// Create .htaccess file for security
+		self::create_htaccess();
 
-        if ( ! file_exists( $grabwp_dir ) ) {
-            wp_mkdir_p( $grabwp_dir );
-        }
-        if ( ! file_exists( $htaccess_file ) ) {
-            @file_put_contents( $htaccess_file, $htaccess_content );
-        }
-    }
-    
-    /**
-     * Create necessary directories
-     * 
-     * @since 1.0.0
-     */
-    private static function create_directories() {
-        $grabwp_dir = WP_CONTENT_DIR . '/grabwp';
-        
-        if ( ! file_exists( $grabwp_dir ) ) {
-            $result = wp_mkdir_p( $grabwp_dir );
-            if ( ! $result ) {
-                // Handle directory creation failure silently
-                // Directory creation failure will be handled by the calling code
-            }
-        }
-    }
-    
-    /**
-     * Create default tenant mappings file
-     * 
-     * @since 1.0.0
-     */
-    private static function create_tenant_mappings_file() {
-        $mappings_file = WP_CONTENT_DIR . '/grabwp/tenants.php';
-        
-        if ( ! file_exists( $mappings_file ) ) {
-            $content = "<?php\n";
-            $content .= "/**\n";
-            $content .= " * Tenant Domain Mappings\n";
-            $content .= " * \n";
-            $content .= " * This file contains domain mappings for tenant identification.\n";
-            $content .= " * Format: \$tenant_mappings['tenant_id'] = array( 'domain1', 'domain2' );\n";
-            $content .= " */\n\n";
-            $content .= "\$tenant_mappings = array(\n";
-            $content .= "    // Example: 'abc123' => array( 'tenant1.grabwp.local' ),\n";
-            $content .= ");\n";
-            
-            $result = file_put_contents( $mappings_file, $content );
-            if ( false === $result ) {
-                // Handle file creation failure silently
-                // File creation failure will be handled by the calling code
-            }
-        }
-    }
+		// Create necessary directories
+		self::create_directories();
+
+		// Create index.php protection
+		self::create_index_protection();
+
+		// Create default tenant mappings file
+		self::create_tenant_mappings_file();
+	}
+
+	/**
+	 * Create .htaccess file to block web access
+	 *
+	 * @since 1.0.0
+	 */
+	private static function create_htaccess() {
+		$grabwp_dir    = GrabWP_Tenancy_Path_Manager::get_tenants_base_dir();
+		$htaccess_file = $grabwp_dir . '/.htaccess';
+
+		// Enhanced .htaccess protection for WordPress.org compliance
+		$htaccess_content  = "# GrabWP Tenancy Security Protection\n";
+		$htaccess_content .= "# Prevent directory listing\n";
+		$htaccess_content .= "Options -Indexes\n\n";
+
+		$htaccess_content .= "# Deny access to PHP files\n";
+		$htaccess_content .= "<FilesMatch \"\\.php$\">\n";
+		$htaccess_content .= "    <IfModule mod_authz_core.c>\n";
+		$htaccess_content .= "        Require all denied\n";
+		$htaccess_content .= "    </IfModule>\n";
+		$htaccess_content .= "    <IfModule !mod_authz_core.c>\n";
+		$htaccess_content .= "        Order allow,deny\n";
+		$htaccess_content .= "        Deny from all\n";
+		$htaccess_content .= "    </IfModule>\n";
+		$htaccess_content .= "</FilesMatch>\n\n";
+
+		$htaccess_content .= "# Deny access to hidden files and directories\n";
+		$htaccess_content .= "<FilesMatch \"^\\.*\">\n";
+		$htaccess_content .= "    <IfModule mod_authz_core.c>\n";
+		$htaccess_content .= "        Require all denied\n";
+		$htaccess_content .= "    </IfModule>\n";
+		$htaccess_content .= "    <IfModule !mod_authz_core.c>\n";
+		$htaccess_content .= "        Order allow,deny\n";
+		$htaccess_content .= "        Deny from all\n";
+		$htaccess_content .= "    </IfModule>\n";
+		$htaccess_content .= "</FilesMatch>\n\n";
+
+		$htaccess_content .= "# Deny access to sensitive file types\n";
+		$htaccess_content .= "<FilesMatch \"\\.(txt|log|md|json)$\">\n";
+		$htaccess_content .= "    <IfModule mod_authz_core.c>\n";
+		$htaccess_content .= "        Require all denied\n";
+		$htaccess_content .= "    </IfModule>\n";
+		$htaccess_content .= "    <IfModule !mod_authz_core.c>\n";
+		$htaccess_content .= "        Order allow,deny\n";
+		$htaccess_content .= "        Deny from all\n";
+		$htaccess_content .= "    </IfModule>\n";
+		$htaccess_content .= "</FilesMatch>\n";
+
+		if ( ! file_exists( $grabwp_dir ) ) {
+			wp_mkdir_p( $grabwp_dir );
+		}
+		if ( ! file_exists( $htaccess_file ) ) {
+			@file_put_contents( $htaccess_file, $htaccess_content );
+		}
+	}
+
+	/**
+	 * Create index.php protection files
+	 *
+	 * @since 1.0.0
+	 */
+	private static function create_index_protection() {
+		$grabwp_dir = GrabWP_Tenancy_Path_Manager::get_tenants_base_dir();
+		$index_file = $grabwp_dir . '/index.php';
+
+		// WordPress-standard index.php protection
+		$index_content  = "<?php\n";
+		$index_content .= "/**\n";
+		$index_content .= " * GrabWP Tenancy - Directory Protection\n";
+		$index_content .= " * \n";
+		$index_content .= " * @package GrabWP_Tenancy\n";
+		$index_content .= " */\n\n";
+		$index_content .= "// Silence is golden.\n";
+
+		if ( ! file_exists( $index_file ) ) {
+			@file_put_contents( $index_file, $index_content );
+		}
+	}
+
+	/**
+	 * Create necessary directories
+	 *
+	 * @since 1.0.0
+	 */
+	private static function create_directories() {
+		$grabwp_dir = GrabWP_Tenancy_Path_Manager::get_tenants_base_dir();
+
+		if ( ! file_exists( $grabwp_dir ) ) {
+			$result = wp_mkdir_p( $grabwp_dir );
+			if ( ! $result ) {
+				// Handle directory creation failure silently
+				// Directory creation failure will be handled by the calling code
+			}
+		}
+	}
+
+	/**
+	 * Create default tenant mappings file
+	 *
+	 * @since 1.0.0
+	 */
+	private static function create_tenant_mappings_file() {
+		$mappings_file = GrabWP_Tenancy_Path_Manager::get_tenants_file_path();
+
+		if ( ! file_exists( $mappings_file ) ) {
+			$content  = "<?php\n";
+			$content .= "/**\n";
+			$content .= " * Tenant Domain Mappings\n";
+			$content .= " * Generated by GrabWP Tenancy Plugin\n";
+			$content .= " * \n";
+			$content .= " * This file contains domain mappings for tenant identification.\n";
+			$content .= " * Format: \$tenant_mappings['tenant_id'] = array( 'domain1', 'domain2' );\n";
+			$content .= " * \n";
+			$content .= " * @package GrabWP_Tenancy\n";
+			$content .= " */\n\n";
+			$content .= "defined( 'ABSPATH' ) || exit; // Exit if accessed directly\n\n";
+			$content .= "\$tenant_mappings = array(\n";
+			$content .= "    // Example: 'abc123' => array( 'tenant1.grabwp.local' ),\n";
+			$content .= ");\n";
+
+			$result = file_put_contents( $mappings_file, $content );
+			if ( false === $result ) {
+				// Handle file creation failure silently
+				// File creation failure will be handled by the calling code
+			}
+		}
+	}
 }

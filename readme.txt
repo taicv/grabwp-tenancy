@@ -4,7 +4,7 @@ Tags: multi-tenant, tenancy, isolation, routing, domains
 Requires at least: 5.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,15 @@ The plugin is designed to be compatible with most WordPress plugins. However, pl
    `require_once __DIR__ . '/wp-content/plugins/grabwp-tenancy/load.php';`
 
 == Changelog ==
+
+= 1.0.3 =
+* **Major Enhancement**: Added comprehensive early loading system with load-helper.php
+* **Security Improvements**: Enhanced input sanitization and validation functions for early loading
+* **Path Management**: Introduced centralized Path Manager with backward compatibility support
+* **WordPress Compliance**: Improved path structure with fallback to WordPress-compliant uploads directory
+* **CLI Support**: Added command-line interface support for tenant operations
+* **Performance**: Optimized tenant detection with caching and reduced file system calls
+* **Backward Compatibility**: Maintained support for existing wp-content/grabwp structure
 
 = 1.0.2 =
 * Improved tenant management interface
