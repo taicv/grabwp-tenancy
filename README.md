@@ -6,7 +6,12 @@ Multi-tenant WordPress solution with shared MySQL and domain-based routing.
 
 GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential isolation features. This plugin focuses on cost-effective multi-tenancy with shared resources and basic tenant separation.
 
-**Available on WordPress.org**: [Download GrabWP Tenancy](https://wordpress.org/plugins/grabwp-tenancy/)
+## 📦 Download & Resources
+
+- **📥 Download**: [WordPress.org Plugin Directory](https://wordpress.org/plugins/grabwp-tenancy/) - Official plugin distribution
+- **🌐 Documentation**: [Official Website](https://grabwp.com) - Complete guides and support
+- **🐛 Issues & Support**: [WordPress.org Support Forum](https://wordpress.org/support/plugin/grabwp-tenancy/) - Community support
+- **💻 Source Code**: [GitHub Repository](https://github.com/taicv/grabwp-tenancy) - Development and contributions
 
 ## Requirements
 
@@ -28,13 +33,15 @@ GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential
    ```
 
 #### Manual Installation
-1. Download from [WordPress.org](https://wordpress.org/plugins/grabwp-tenancy/)
+1. Download from [WordPress.org Plugin Directory](https://wordpress.org/plugins/grabwp-tenancy/)
 2. Upload `grabwp-tenancy` to `/wp-content/plugins/`
 3. Activate the plugin
 4. Add to `wp-config.php`:
    ```php
    require_once __DIR__ . '/wp-content/plugins/grabwp-tenancy/load.php';
    ```
+
+> 📖 **Need help?** Check our [complete documentation](https://grabwp.com) or visit the [support forum](https://wordpress.org/support/plugin/grabwp-tenancy/).
 
 ## Architecture
 
@@ -112,6 +119,17 @@ flowchart TD
 - **Classes**: `GrabWP_Tenancy_` prefix
 - **Constants**: `GRABWP_TENANCY_` prefix
 
+### Contributing
+- **Issues**: Report bugs and request features on [GitHub Issues](https://github.com/taicv/grabwp-tenancy/issues)
+- **Pull Requests**: Submit code improvements via [GitHub Pull Requests](https://github.com/taicv/grabwp-tenancy/pulls)
+- **Documentation**: Help improve docs on our [website](https://grabwp.com)
+
+## Support & Community
+
+- **📖 Documentation**: [grabwp.com](https://grabwp.com) - Complete guides and tutorials
+- **💬 Support Forum**: [WordPress.org Support](https://wordpress.org/support/plugin/grabwp-tenancy/) - Community help
+- **🐛 Bug Reports**: [GitHub Issues](https://github.com/taicv/grabwp-tenancy/issues) - Technical issues
+- **⭐ Rate Plugin**: [WordPress.org Reviews](https://wordpress.org/plugins/grabwp-tenancy/#reviews) - Share your experience
 
 ## License
 

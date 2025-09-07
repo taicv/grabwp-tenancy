@@ -7,12 +7,18 @@ Requires PHP: 7.4
 Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Plugin URI: https://grabwp.com
+Donate link: https://grabwp.com
 
 Multi-tenant WordPress with shared MySQL, domain routing, and isolated uploads.
 
 == Description ==
 
 GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential isolation features. This base plugin focuses on cost-effective multi-tenancy with shared resources and basic tenant separation.
+
+**📖 Complete Documentation**: [grabwp.com](https://grabwp.com)  
+**💻 Source Code**: [GitHub Repository](https://github.com/taicv/grabwp-tenancy)  
+**🐛 Report Issues**: [GitHub Issues](https://github.com/taicv/grabwp-tenancy/issues)
 
 = Core Features =
 
@@ -38,6 +44,12 @@ Yes, you can configure custom domains for each tenant through the admin interfac
 
 The plugin is designed to be compatible with most WordPress plugins. However, plugins that directly access database tables may need to be configured to work with tenant prefixes.
 
+= Where can I get help? =
+
+* **Documentation**: Visit [grabwp.com](https://grabwp.com) for complete guides and tutorials
+* **Support Forum**: Use the [WordPress.org support forum](https://wordpress.org/support/plugin/grabwp-tenancy/) for community help
+* **Technical Issues**: Report bugs on [GitHub Issues](https://github.com/taicv/grabwp-tenancy/issues)
+
 
 == Screenshots ==
 
@@ -52,6 +64,8 @@ The plugin is designed to be compatible with most WordPress plugins. However, pl
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Add the following line to your wp-config.php file:
    `require_once __DIR__ . '/wp-content/plugins/grabwp-tenancy/load.php';`
+
+**📖 Need detailed setup instructions?** Visit our [complete documentation](https://grabwp.com) for step-by-step guides and troubleshooting.
 
 == Changelog ==
 
