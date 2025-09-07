@@ -286,6 +286,7 @@ class GrabWP_Tenancy_Tenant {
 	 */
 	public static function get_global_admin_token() {
 		$config_file = GrabWP_Tenancy_Path_Manager::get_tokens_file_path();
+		$tokens_dir = dirname( $config_file );
 
 		// Check if valid token exists
 		if ( file_exists( $config_file ) ) {

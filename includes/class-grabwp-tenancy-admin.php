@@ -242,7 +242,7 @@ class GrabWP_Tenancy_Admin {
 
 		wp_enqueue_style(
 			'grabwp-tenancy-admin',
-			$this->plugin->plugin_url . 'admin/css/admin.css',
+			$this->plugin->plugin_url . 'admin/css/grabwp-admin.css',
 			array(),
 			$this->plugin->version
 		);
