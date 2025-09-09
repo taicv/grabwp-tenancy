@@ -17,8 +17,8 @@ Multi-tenant WordPress with shared MySQL, domain routing, and isolated uploads.
 GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential isolation features. This base plugin focuses on cost-effective multi-tenancy with shared resources and basic tenant separation.
 
 **📖 Complete Documentation**: [grabwp.com](https://grabwp.com)  
-**💻 Source Code**: [GitHub Repository](https://github.com/taicv/grabwp-tenancy)  
-**🐛 Report Issues**: [GitHub Issues](https://github.com/taicv/grabwp-tenancy/issues)
+**💻 Source Code**: [GitHub Repository](https://github.com/grabwp/grabwp-tenancy)  
+**🐛 Report Issues**: [GitHub Issues](https://github.com/grabwp/grabwp-tenancy/issues)
 
 = Core Features =
 
@@ -48,7 +48,7 @@ The plugin is designed to be compatible with most WordPress plugins. However, pl
 
 * **Documentation**: Visit [grabwp.com](https://grabwp.com) for complete guides and tutorials
 * **Support Forum**: Use the [WordPress.org support forum](https://wordpress.org/support/plugin/grabwp-tenancy/) for community help
-* **Technical Issues**: Report bugs on [GitHub Issues](https://github.com/taicv/grabwp-tenancy/issues)
+* **Technical Issues**: Report bugs on [GitHub Issues](https://github.com/grabwp/grabwp-tenancy/issues)
 
 
 == Screenshots ==
