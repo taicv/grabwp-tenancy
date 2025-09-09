@@ -11,7 +11,7 @@ GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential
 - **📥 Download**: [WordPress.org Plugin Directory](https://wordpress.org/plugins/grabwp-tenancy/) - Official plugin distribution
 - **🌐 Documentation**: [Official Website](https://grabwp.com) - Complete guides and support
 - **🐛 Issues & Support**: [WordPress.org Support Forum](https://wordpress.org/support/plugin/grabwp-tenancy/) - Community support
-- **💻 Source Code**: [GitHub Repository](https://github.com/taicv/grabwp-tenancy) - Development and contributions
+- **💻 Source Code**: [GitHub Repository](https://github.com/grabwp/grabwp-tenancy) - Development and contributions
 
 ## Requirements
 
@@ -120,15 +120,15 @@ flowchart TD
 - **Constants**: `GRABWP_TENANCY_` prefix
 
 ### Contributing
-- **Issues**: Report bugs and request features on [GitHub Issues](https://github.com/taicv/grabwp-tenancy/issues)
-- **Pull Requests**: Submit code improvements via [GitHub Pull Requests](https://github.com/taicv/grabwp-tenancy/pulls)
+- **Issues**: Report bugs and request features on [GitHub Issues](https://github.com/grabwp/grabwp-tenancy/issues)
+- **Pull Requests**: Submit code improvements via [GitHub Pull Requests](https://github.com/grabwp/grabwp-tenancy/pulls)
 - **Documentation**: Help improve docs on our [website](https://grabwp.com)
 
 ## Support & Community
 
 - **📖 Documentation**: [grabwp.com](https://grabwp.com) - Complete guides and tutorials
 - **💬 Support Forum**: [WordPress.org Support](https://wordpress.org/support/plugin/grabwp-tenancy/) - Community help
-- **🐛 Bug Reports**: [GitHub Issues](https://github.com/taicv/grabwp-tenancy/issues) - Technical issues
+- **🐛 Bug Reports**: [GitHub Issues](https://github.com/grabwp/grabwp-tenancy/issues) - Technical issues
 - **⭐ Rate Plugin**: [WordPress.org Reviews](https://wordpress.org/plugins/grabwp-tenancy/#reviews) - Share your experience
 
 ## License
