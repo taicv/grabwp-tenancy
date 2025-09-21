@@ -14,6 +14,10 @@ Multi-tenant WordPress with shared MySQL, domain routing, and isolated uploads.
 
 == Description ==
 
+https://www.youtube.com/watch?v=SAd_QeUZEDw
+
+= WORDPRESS MULTISITE ALTERNATIVE - ENABLE MULTI-TENANT AT NO COST =
+
 GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential isolation features. This base plugin focuses on cost-effective multi-tenancy with shared resources and basic tenant separation.
 
 **📖 Complete Documentation**: [grabwp.com](https://grabwp.com)  

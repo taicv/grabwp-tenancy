@@ -15,6 +15,51 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // =============================================================================
+// PRO PLUGIN INTEGRATION
+// =============================================================================
+
+/**
+ * Load pro plugin helper functions if available
+ * Pro plugin functions take priority over base plugin functions
+ */
+function grabwp_tenancy_load_pro_helper() {
+	$pro_helper_path = __DIR__ . '/../grabwp-tenancy-pro/load-helper-pro.php';
+	if ( file_exists( $pro_helper_path ) && is_readable( $pro_helper_path ) ) {
+		require_once $pro_helper_path;
+		return true;
+	}
+	
+	return false;
+}
+
+// Load pro helper immediately if available
+$grabwp_tenancy_pro_loaded = grabwp_tenancy_load_pro_helper();
+
+
+
+/**
+ * Define GRABWP_TENANCY_BASE_DIR immediately when this file loads
+ * This is required for early loading tenant config detection
+ */
+if ( ! defined( 'GRABWP_TENANCY_BASE_DIR' ) ) {
+	// Use pro version if available
+	if ( function_exists( 'grabwp_tenancy_pro_define_base_dir' ) ) {
+		$base_dir = grabwp_tenancy_pro_define_base_dir();
+		if ( $base_dir ) {
+			define( 'GRABWP_TENANCY_BASE_DIR', $base_dir['grabwp_base_dir'] );
+			return;
+		}
+	}
+	if ( file_exists( ABSPATH . 'wp-content/grabwp/tenants.php' ) ) {
+		define( 'GRABWP_TENANCY_BASE_DIR', ABSPATH . 'wp-content/grabwp' );
+	} else {
+		define( 'GRABWP_TENANCY_BASE_DIR', ABSPATH . 'wp-content/uploads/grabwp-tenancy' );
+	}
+
+	
+}
+
+// =============================================================================
 // SECURITY & VALIDATION FUNCTIONS
 // =============================================================================
 
@@ -317,19 +362,20 @@ function grabwp_tenancy_get_server_info() {
 // PATH & DIRECTORY MANAGEMENT
 // =============================================================================
 
-/**
- * Get content directory path with fallback
- *
- * @return string Content directory path
- */
-function grabwp_tenancy_get_content_dir() {
-	return defined( 'WP_CONTENT_DIR' ) ? WP_CONTENT_DIR : ABSPATH . 'wp-content';
-}
 
 /**
  * Define essential WordPress constants for early loading
+ *
+ * @param string $tenant_id Optional tenant identifier
  */
-function grabwp_tenancy_define_constants() {
+function grabwp_tenancy_define_constants( $tenant_id = '' ) {
+	// Use pro version if available
+	if ( function_exists( 'grabwp_tenancy_pro_define_constants' ) ) {
+		grabwp_tenancy_pro_define_constants( $tenant_id );
+		return;
+	}
+	
+	// Base plugin version
 	// Define ABSPATH if not already defined
 	if ( ! defined( 'ABSPATH' ) ) {
 		// Note: Using dirname() here is necessary for early loading in wp-config.php
@@ -355,10 +401,6 @@ function grabwp_tenancy_define_constants() {
 		define( 'WP_PLUGIN_DIR', WP_CONTENT_DIR . '/plugins' );
 	}
 
-	// Define WPMU_PLUGIN_DIR if not already defined
-	if ( ! defined( 'WPMU_PLUGIN_DIR' ) ) {
-		define( 'WPMU_PLUGIN_DIR', WP_CONTENT_DIR . '/mu-plugins' );
-	}
 
 	// Define WP_SITEURL if not already defined
 	if ( ! defined( 'WP_SITEURL' ) && ! empty( $server_info['host'] ) ) {
@@ -378,6 +420,8 @@ function grabwp_tenancy_define_constants() {
 	if ( ! defined( 'DISABLE_FILE_MODS' ) ) {
 		define( 'DISABLE_FILE_MODS', true );
 	}
+
+	grabwp_tenancy_set_uploads_paths( $tenant_id );
 }
 
 /**
@@ -385,35 +429,23 @@ function grabwp_tenancy_define_constants() {
  *
  * @param string $tenant_id Tenant identifier
  */
-function grabwp_tenancy_set_content_paths( $tenant_id ) {
+function grabwp_tenancy_set_uploads_paths( $tenant_id ) {
+	// Base plugin version
 	// Validate tenant ID
 	if ( ! grabwp_tenancy_validate_tenant_id( $tenant_id ) ) {
 		return;
 	}
 
-	// Determine content directory
-	$content_dir = grabwp_tenancy_get_content_dir();
-
-	// Check for existing tenant directory structure (new vs old)
-	$new_upload_dir = $content_dir . '/uploads/grabwp-tenancy/' . $tenant_id . '/uploads';
-	$old_upload_dir = $content_dir . '/grabwp/' . $tenant_id . '/uploads';
-
-	// Use existing structure if found, otherwise prefer new structure
-	if ( is_dir( $old_upload_dir ) && ! is_dir( $new_upload_dir ) ) {
-		$upload_dir       = $old_upload_dir;
-		$uploads_relative = 'wp-content/grabwp/' . $tenant_id . '/uploads';
-	} else {
-		$upload_dir       = $new_upload_dir;
-		$uploads_relative = 'wp-content/uploads/grabwp-tenancy/' . $tenant_id . '/uploads';
-	}
-
-	// Set upload directory constant
+	// Use GRABWP_TENANCY_BASE_DIR which is now properly defined
+	$upload_dir = GRABWP_TENANCY_BASE_DIR . '/' . $tenant_id . '/uploads';
+	$upload_relative = str_replace( ABSPATH, '', $upload_dir );
+	
 	define( 'GRABWP_TENANCY_UPLOAD_DIR', $upload_dir );
 
-	// Define UPLOADS constant to redirect WordPress uploads to tenant directory
 	if ( ! defined( 'UPLOADS' ) ) {
-		define( 'UPLOADS', $uploads_relative );
+		define( 'UPLOADS', $upload_relative );
 	}
+
 }
 
 // =============================================================================
@@ -426,6 +458,11 @@ function grabwp_tenancy_set_content_paths( $tenant_id ) {
  * @return array Tenant mappings array
  */
 function grabwp_tenancy_load_tenant_mappings() {
+	// Use pro version if available
+	if ( function_exists( 'grabwp_tenancy_pro_load_tenant_mappings' ) ) {
+		grabwp_tenancy_pro_load_tenant_mappings();
+		return;
+	}
 	// Cache mappings to avoid multiple file reads
 	static $tenant_mappings = null;
 
@@ -433,15 +470,7 @@ function grabwp_tenancy_load_tenant_mappings() {
 		return $tenant_mappings;
 	}
 
-	// Determine content directory
-	$content_dir = grabwp_tenancy_get_content_dir();
-
-	// Simple detection - check for legacy structure first for consistency
-	if ( file_exists( $content_dir . '/grabwp/tenants.php' ) ) {
-		$mappings_file = $content_dir . '/grabwp/tenants.php';
-	} else {
-		$mappings_file = $content_dir . '/uploads/grabwp-tenancy/tenants.php';
-	}
+	$mappings_file = GRABWP_TENANCY_BASE_DIR . '/tenants.php';
 
 	if ( file_exists( $mappings_file ) && is_readable( $mappings_file ) ) {
 		$tenant_mappings = array();
@@ -488,6 +517,11 @@ function grabwp_tenancy_identify_tenant( $domain, $mappings ) {
  * @param string $tenant_id Tenant identifier
  */
 function grabwp_tenancy_set_tenant_context( $tenant_id ) {
+	// Use pro version if available
+	if ( function_exists( 'grabwp_tenancy_pro_set_tenant_context' ) ) {
+		grabwp_tenancy_pro_set_tenant_context( $tenant_id );
+		return;
+	}
 	// Check if tenant context is already defined
 	if ( defined( 'GRABWP_TENANCY_TENANT_ID' ) ) {
 		if ( ! defined( 'GRABWP_TENANCY_IS_TENANT' ) ) {
@@ -545,12 +579,18 @@ function grabwp_tenancy_set_database_prefix( $tenant_id ) {
  * @param string $tenant_id Tenant identifier
  */
 function grabwp_tenancy_configure_tenant( $tenant_id ) {
+	// Use pro version if available
+	if ( function_exists( 'grabwp_tenancy_pro_configure_tenant' ) ) {
+		grabwp_tenancy_pro_configure_tenant( $tenant_id );
+		return;
+	}
+	
+	// Base plugin version
 	if ( ! grabwp_tenancy_validate_tenant_id( $tenant_id ) ) {
 		return;
 	}
 
 	grabwp_tenancy_set_database_prefix( $tenant_id );
-	grabwp_tenancy_set_content_paths( $tenant_id );
 }
 
 // =============================================================================
@@ -562,7 +602,7 @@ function grabwp_tenancy_configure_tenant( $tenant_id ) {
  *
  * @param string $tenant_id Tenant identifier for CLI context
  */
-function grabwp_tenancy_configure_cli_environment( $tenant_id ) {
+function grabwp_tenancy_configure_cli_environment() {
 	// Set debug & development constants for CLI
 	if ( ! defined( 'DISALLOW_FILE_MODS' ) ) {
 		define( 'DISALLOW_FILE_MODS', false );
@@ -592,4 +632,46 @@ function grabwp_tenancy_get_cli_domain( $tenant_id, $tenant_mappings ) {
 	}
 
 	return $tenant_id . '.grabwp.local'; // Fallback domain
+}
+
+
+/**
+ * Detect tenant from CLI or domain
+ */
+function grabwp_tenancy_detect_tenant() {
+	// CLI: Check for pre-defined tenant ID
+	if ( defined( 'GRABWP_TENANCY_TENANT_ID' ) && GRABWP_TENANCY_TENANT_ID !== '' ) {
+		grabwp_tenancy_configure_cli_environment();
+		return GRABWP_TENANCY_TENANT_ID;
+	}
+
+	// Web: Get domain and find tenant
+	$server_info     = grabwp_tenancy_get_server_info();
+	$tenant_mappings = grabwp_tenancy_load_tenant_mappings();
+
+	return grabwp_tenancy_identify_tenant( $server_info['host'], $tenant_mappings );
+}
+
+
+
+/**
+ * Initialize tenant system
+ */
+function grabwp_tenancy_early_init() {
+	// Use pro version if available
+	if ( function_exists( 'grabwp_tenancy_pro_early_init' ) ) {
+		grabwp_tenancy_pro_early_init();
+		return;
+	}
+	
+	// Base plugin version
+	$tenant_id = grabwp_tenancy_detect_tenant();
+
+	if ( ! $tenant_id ) {
+		return;
+	}
+
+	grabwp_tenancy_set_tenant_context( $tenant_id );
+	grabwp_tenancy_define_constants( $tenant_id );
+	grabwp_tenancy_configure_tenant( $tenant_id );
 }

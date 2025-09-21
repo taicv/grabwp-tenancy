@@ -3,7 +3,7 @@
  * Plugin Name: GrabWP Tenancy
  * Plugin URI: https://grabwp.com/tenancy
  * Description: Foundation multi-tenant WordPress solution with shared MySQL database and separated uploads. Designed to be extended by GrabWP Tenancy Pro for advanced features.
- * Version: 1.0.3
+ * Version: 1.0.4-rc1
  * Author: GrabWP
  * Author URI: https://grabwp.com
  * License: GPLv2 or later
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants
-define( 'GRABWP_TENANCY_VERSION', '1.0.3' );
+define( 'GRABWP_TENANCY_VERSION', '1.0.4-rc1' );
 define( 'GRABWP_TENANCY_PLUGIN_FILE', __FILE__ );
 define( 'GRABWP_TENANCY_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GRABWP_TENANCY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -139,16 +139,19 @@ final class GrabWP_Tenancy {
 	 * @since 1.0.0
 	 */
 	private function load_dependencies() {
+
+		// Load MU plugin functionality
+		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-path-manager.php';
+		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-assets.php';
+		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-logger.php';
 		// Load core classes
 		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-loader.php';
 		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-tenant.php';
 		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-admin.php';
 		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-admin-notice.php';
 
-		// Load MU plugin functionality
-		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-path-manager.php';
-		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-config.php';
-		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-assets.php';
+		
+		
 	}
 
 	/**
@@ -165,9 +168,6 @@ final class GrabWP_Tenancy {
 		$this->init_loader();
 		$this->init_admin();
 		GrabWP_Tenancy_Admin_Notice::register();
-
-		// Initialize new components (from MU plugin)
-		$this->init_config();
 		$this->init_assets();
 
 		// Allow pro plugin to extend
@@ -199,16 +199,6 @@ final class GrabWP_Tenancy {
 		}
 	}
 
-	/**
-	 * Initialize config component
-	 *
-	 * @since 1.0.0
-	 */
-	private function init_config() {
-		if ( class_exists( 'GrabWP_Tenancy_Config' ) ) {
-			GrabWP_Tenancy_Config::init();
-		}
-	}
 
 	/**
 	 * Initialize assets component
@@ -227,8 +217,8 @@ final class GrabWP_Tenancy {
 	 * @since 1.0.0
 	 */
 	public function on_plugins_loaded() {
-		// Check for pro plugin
-		$this->check_pro_plugin();
+		// Check for pro plugin after all plugins are loaded
+		add_action( 'init', array( $this, 'check_pro_plugin' ), 5 );
 	}
 
 	/**
@@ -236,11 +226,14 @@ final class GrabWP_Tenancy {
 	 *
 	 * @since 1.0.0
 	 */
-	private function check_pro_plugin() {
-		if ( class_exists( 'GrabWP_Tenancy_Pro' ) ) {
-			define( 'GRABWP_TENANCY_PRO_ACTIVE', true );
-		} else {
-			define( 'GRABWP_TENANCY_PRO_ACTIVE', false );
+	public function check_pro_plugin() {
+		// Only define the constant if it hasn't been defined yet.
+		if ( ! defined( 'GRABWP_TENANCY_PRO_ACTIVE' ) ) {
+			if ( class_exists( 'GrabWP_Tenancy_Pro' ) ) {
+				define( 'GRABWP_TENANCY_PRO_ACTIVE', true );
+			} else {
+				define( 'GRABWP_TENANCY_PRO_ACTIVE', false );
+			}
 		}
 	}
 

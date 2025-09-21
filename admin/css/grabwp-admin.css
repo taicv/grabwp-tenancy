@@ -83,4 +83,26 @@
     padding: 2px 4px;
     border-radius: 2px;
     font-size: 12px;
+}
+
+/* Adaptive column widths for tenant table */
+.wp-list-table .column-tenant_id {
+    width: 10%;
+    white-space: nowrap;
+}
+
+.wp-list-table .column-type {
+    width: 5%;
+}
+
+.wp-list-table .column-domains {
+    width: 25%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.wp-list-table .column-actions {
+    width: auto;
+    text-align: right;
 } 

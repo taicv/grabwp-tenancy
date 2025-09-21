@@ -121,4 +121,29 @@
 		}
 	}
 
+	/**
+	 * Confirm tenant deletion by requiring tenant ID input
+	 *
+	 * @param {string} tenantId The tenant ID to confirm
+	 * @return {boolean} True if deletion should proceed, false otherwise
+	 */
+	window.grabwpTenancyConfirmDelete = function(tenantId) {
+		var message = grabwpTenancyAdmin.confirmMessage + ' ' + tenantId;
+		var userInput = prompt(message);
+		
+		if (userInput === null) {
+			// User clicked Cancel
+			return false;
+		}
+		
+		if (userInput === tenantId) {
+			// Correct ID entered, proceed with deletion
+			return true;
+		} else {
+			// Wrong ID entered
+			alert(grabwpTenancyAdmin.incorrectIdMessage);
+			return false;
+		}
+	};
+
 })();

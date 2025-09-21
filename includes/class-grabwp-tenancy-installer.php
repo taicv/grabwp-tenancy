@@ -29,11 +29,29 @@ class GrabWP_Tenancy_Installer {
 	 * @since 1.0.0
 	 */
 	private static function create_htaccess() {
-		$grabwp_dir    = GrabWP_Tenancy_Path_Manager::get_tenants_base_dir();
-		$htaccess_file = $grabwp_dir . '/.htaccess';
+		$grabwp_dir = GrabWP_Tenancy_Path_Manager::get_tenants_base_dir();
+		
+		// Use the new reusable method
+		self::create_htaccess_for_directory( $grabwp_dir, 'GrabWP Tenancy Security Protection' );
+	}
+
+	/**
+	 * Create .htaccess file for any directory (reusable utility)
+	 *
+	 * @since 1.0.0
+	 * @param string $directory Directory path where to create .htaccess
+	 * @param string $comment_header Header comment for the .htaccess file
+	 * @return bool Success status
+	 */
+	public static function create_htaccess_for_directory( $directory, $comment_header = 'GrabWP Tenancy Security Protection' ) {
+		if ( empty( $directory ) || ! is_string( $directory ) ) {
+			return false;
+		}
+
+		$htaccess_file = $directory . '/.htaccess';
 
 		// Enhanced .htaccess protection for WordPress.org compliance
-		$htaccess_content  = "# GrabWP Tenancy Security Protection\n";
+		$htaccess_content  = "# {$comment_header}\n";
 		$htaccess_content .= "# Prevent directory listing\n";
 		$htaccess_content .= "Options -Indexes\n\n";
 
@@ -70,12 +88,21 @@ class GrabWP_Tenancy_Installer {
 		$htaccess_content .= "    </IfModule>\n";
 		$htaccess_content .= "</FilesMatch>\n";
 
-		if ( ! file_exists( $grabwp_dir ) ) {
-			wp_mkdir_p( $grabwp_dir );
+		// Ensure directory exists
+		if ( ! file_exists( $directory ) ) {
+			$result = wp_mkdir_p( $directory );
+			if ( ! $result ) {
+				return false;
+			}
 		}
+
+		// Create .htaccess file
 		if ( ! file_exists( $htaccess_file ) ) {
-			@file_put_contents( $htaccess_file, $htaccess_content );
+			$result = file_put_contents( $htaccess_file, $htaccess_content );
+			return false !== $result;
 		}
+
+		return true;
 	}
 
 	/**
@@ -85,20 +112,41 @@ class GrabWP_Tenancy_Installer {
 	 */
 	private static function create_index_protection() {
 		$grabwp_dir = GrabWP_Tenancy_Path_Manager::get_tenants_base_dir();
-		$index_file = $grabwp_dir . '/index.php';
+		
+		// Use the new reusable method
+		self::create_index_protection_for_directory( $grabwp_dir, 'GrabWP_Tenancy' );
+	}
+
+	/**
+	 * Create index.php protection for any directory (reusable utility)
+	 *
+	 * @since 1.0.0
+	 * @param string $directory Directory path where to create index.php
+	 * @param string $package Package name for the comment
+	 * @return bool Success status
+	 */
+	public static function create_index_protection_for_directory( $directory, $package = 'GrabWP_Tenancy' ) {
+		if ( empty( $directory ) || ! is_string( $directory ) ) {
+			return false;
+		}
+
+		$index_file = $directory . '/index.php';
 
 		// WordPress-standard index.php protection
 		$index_content  = "<?php\n";
 		$index_content .= "/**\n";
-		$index_content .= " * GrabWP Tenancy - Directory Protection\n";
+		$index_content .= " * {$package} - Directory Protection\n";
 		$index_content .= " * \n";
-		$index_content .= " * @package GrabWP_Tenancy\n";
+		$index_content .= " * @package {$package}\n";
 		$index_content .= " */\n\n";
 		$index_content .= "// Silence is golden.\n";
 
 		if ( ! file_exists( $index_file ) ) {
-			@file_put_contents( $index_file, $index_content );
+			$result = file_put_contents( $index_file, $index_content );
+			return false !== $result;
 		}
+
+		return true;
 	}
 
 	/**

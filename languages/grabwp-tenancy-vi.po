@@ -379,6 +379,21 @@ msgstr "Xóa tenant thành công."
 msgid "Failed to delete tenant."
 msgstr "Xóa tenant thất bại."
 
+msgid "Tenant deleted successfully. All files and database tables removed."
+msgstr "Tenant đã được xóa thành công. Tất cả files và database tables đã được xóa."
+
+msgid "Tenant deleted successfully. Files removed, but some database tables may remain."
+msgstr "Tenant đã được xóa thành công. Files đã được xóa, nhưng một số database tables có thể còn lại."
+
+msgid "Tenant deleted, but some files or database tables may remain."
+msgstr "Tenant đã được xóa, nhưng một số files hoặc database tables có thể còn lại."
+
+msgid "To confirm deletion, type the tenant ID:"
+msgstr "Để xác nhận xóa, hãy nhập ID của tenant:"
+
+msgid "Incorrect tenant ID. Deletion cancelled."
+msgstr "ID tenant không đúng. Đã hủy việc xóa."
+
 #. translators: %s: comma-separated list of domain names already in use by other tenants
 #: includes/class-grabwp-tenancy-admin.php:614
 msgid ""

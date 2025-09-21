@@ -13,6 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Include the list table class
+require_once plugin_dir_path( __FILE__ ) . '../admin/class-grabwp-tenancy-list-table.php';
+
 /**
  * GrabWP Tenancy Admin Class
  *
@@ -70,7 +73,6 @@ class GrabWP_Tenancy_Admin {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-
 		if ( ! isset( $_POST['action'] ) ) {
 			return;
 		}
@@ -98,6 +100,15 @@ class GrabWP_Tenancy_Admin {
 
 						$domains = array_filter( $raw_domains );
 					}
+					/**
+					 * Process additional form data before tenant creation
+					 *
+					 * @since 1.0.4
+					 * @param array $domains Array of domains
+					 * @param array $_POST  The complete POST data
+					 */
+					do_action( 'grabwp_tenancy_process_create_form_data', $domains, $_POST );
+
 					$result = $this->handle_create_tenant( $domains );
 
 					if ( $result['type'] === 'success' ) {
@@ -129,6 +140,16 @@ class GrabWP_Tenancy_Admin {
 
 						$domains = array_filter( $raw_domains );
 					}
+					/**
+					 * Process additional form data before tenant update
+					 *
+					 * @since 1.0.4
+					 * @param string $tenant_id The tenant ID
+					 * @param array  $domains Array of domains
+					 * @param array  $_POST  The complete POST data
+					 */
+					do_action( 'grabwp_tenancy_process_update_form_data', $tenant_id, $domains, $_POST );
+
 					$result = $this->handle_update_tenant( $tenant_id, $domains );
 
 					if ( $result['type'] === 'success' ) {
@@ -162,6 +183,19 @@ class GrabWP_Tenancy_Admin {
 						exit;
 					}
 				}
+				break;
+
+			default:
+				/**
+				 * Handle custom tenant actions
+				 *
+				 * Allows pro plugin and other extensions to handle custom actions
+				 *
+				 * @since 1.0.4
+				 * @param string $action The action being performed
+				 * @param array  $_POST  The POST data
+				 */
+				do_action( 'grabwp_tenancy_handle_custom_action', $action, $_POST );
 				break;
 		}
 	}
@@ -205,7 +239,7 @@ class GrabWP_Tenancy_Admin {
 
 		// Edit page is hidden from menu, accessed via links
 		add_submenu_page(
-			null, // Hidden from menu
+			'', // Hidden from menu
 			__( 'Edit Tenant', 'grabwp-tenancy' ),
 			__( 'Edit Tenant', 'grabwp-tenancy' ),
 			'manage_options',
@@ -221,6 +255,15 @@ class GrabWP_Tenancy_Admin {
 			'grabwp-tenancy-settings',
 			array( $this, 'settings_page' )
 		);
+
+		/**
+		 * Add additional admin menu items
+		 *
+		 * Allows pro plugin and other extensions to add menu items
+		 *
+		 * @since 1.0.4
+		 */
+		do_action( 'grabwp_tenancy_admin_menu' );
 	}
 
 	/**
@@ -262,6 +305,8 @@ class GrabWP_Tenancy_Admin {
 			array(
 				'enterDomainPlaceholder' => __( 'Enter domain (e.g., tenant1.grabwp.local)', 'grabwp-tenancy' ),
 				'removeText'             => __( 'Remove', 'grabwp-tenancy' ),
+				'confirmMessage'         => __( 'To confirm deletion, type the tenant ID:', 'grabwp-tenancy' ),
+				'incorrectIdMessage'     => __( 'Incorrect tenant ID. Deletion cancelled.', 'grabwp-tenancy' ),
 			)
 		);
 	}
@@ -270,8 +315,14 @@ class GrabWP_Tenancy_Admin {
 	 * Main admin page
 	 */
 	public function admin_page() {
-		$tenants = $this->get_tenants();
-		$this->render_admin_page( 'tenants', array( 'tenants' => $tenants ) );
+		// Allow pro plugin to replace list table class
+		$list_table_class = apply_filters( 'grabwp_tenancy_list_table_class', 'GrabWP_Tenancy_List_Table' );
+		
+		// Create list table instance
+		$list_table = new $list_table_class( $this->plugin );
+		$list_table->prepare_items();
+
+		$this->render_admin_page( 'tenants', array( 'list_table' => $list_table ) );
 	}
 
 	/**
@@ -531,6 +582,15 @@ class GrabWP_Tenancy_Admin {
 
 		$tenant_id = GrabWP_Tenancy_Tenant::generate_id();
 
+		/**
+		 * Before creating a tenant
+		 *
+		 * @since 1.0.4
+		 * @param string $tenant_id The tenant ID being created
+		 * @param array  $validated_domains Array of validated domains
+		 */
+		do_action( 'grabwp_tenancy_before_create_tenant', $tenant_id, $validated_domains );
+
 		// Load existing mappings
 		$mappings_file   = $this->get_mappings_file_path();
 		$tenant_mappings = array();
@@ -547,6 +607,15 @@ class GrabWP_Tenancy_Admin {
 			// Create tenant directories
 			$loader = new GrabWP_Tenancy_Loader( $this->plugin );
 			$loader->create_tenant_directories( $tenant_id );
+
+			/**
+			 * After creating a tenant
+			 *
+			 * @since 1.0.4
+			 * @param string $tenant_id The tenant ID that was created
+			 * @param array  $validated_domains Array of validated domains
+			 */
+			do_action( 'grabwp_tenancy_after_create_tenant', $tenant_id, $validated_domains );
 
 			return array(
 				'message' => __( 'Tenant created successfully.', 'grabwp-tenancy' ),
@@ -589,18 +658,52 @@ class GrabWP_Tenancy_Admin {
 
 		// Remove tenant
 		if ( isset( $tenant_mappings[ $tenant_id ] ) ) {
+			/**
+			 * Before deleting a tenant
+			 *
+			 * @since 1.0.4
+			 * @param string $tenant_id The tenant ID being deleted
+			 */
+			do_action( 'grabwp_tenancy_before_delete_tenant', $tenant_id );
+
 			unset( $tenant_mappings[ $tenant_id ] );
 
 			// Save mappings
 			if ( $this->save_tenant_mappings( $tenant_mappings ) ) {
-				// Remove tenant directories
+				// Remove tenant directories and database tables
 				$loader = new GrabWP_Tenancy_Loader( $this->plugin );
-				$loader->remove_tenant_directories( $tenant_id );
+				
+				// Remove directories
+				$directories_removed = $loader->remove_tenant_directories( $tenant_id );
+				
+				// Remove database tables
+				$tables_removed = $loader->remove_tenant_database_tables( $tenant_id );
 
-				return array(
-					'message' => __( 'Tenant deleted successfully.', 'grabwp-tenancy' ),
-					'type'    => 'success',
-				);
+				/**
+				 * After deleting a tenant
+				 *
+				 * @since 1.0.4
+				 * @param string $tenant_id The tenant ID that was deleted
+				 */
+				do_action( 'grabwp_tenancy_after_delete_tenant', $tenant_id );
+
+				// Provide detailed feedback based on cleanup results
+				if ( $directories_removed && $tables_removed ) {
+					return array(
+						'message' => __( 'Tenant deleted successfully. All files and database tables removed.', 'grabwp-tenancy' ),
+						'type'    => 'success',
+					);
+				} elseif ( $directories_removed ) {
+					return array(
+						'message' => __( 'Tenant deleted successfully. Files removed, but some database tables may remain.', 'grabwp-tenancy' ),
+						'type'    => 'warning',
+					);
+				} else {
+					return array(
+						'message' => __( 'Tenant deleted, but some files or database tables may remain.', 'grabwp-tenancy' ),
+						'type'    => 'warning',
+					);
+				}
 			} else {
 				return array(
 					'message' => __( 'Failed to delete tenant.', 'grabwp-tenancy' ),
@@ -710,6 +813,9 @@ class GrabWP_Tenancy_Admin {
 
 			// Save mappings
 			if ( $this->save_tenant_mappings( $tenant_mappings ) ) {
+
+				do_action( 'grabwp_tenancy_after_update_tenant', $tenant_id, $validated_domains );
+
 				return array(
 					'message' => __( 'Tenant updated successfully.', 'grabwp-tenancy' ),
 					'type'    => 'success',

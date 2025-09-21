@@ -31,8 +31,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php endif; ?>
 	<?php endif; ?>
 
-	<div style="background: #fff; border: 1px solid #ccd0d4; padding: 20px; margin: 20px 0;">
-		<form method="post">
+	<div>
+		<form method="post" class="grabwp-tenancy-form">
 			<?php wp_nonce_field( 'grabwp_tenancy_create' ); ?>
 			<input type="hidden" name="action" value="create_tenant" />
 			<table class="form-table">
@@ -52,6 +52,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<p class="description"><?php esc_html_e( 'Valid format: example.com, subdomain.example.com (no http:// or www)', 'grabwp-tenancy' ); ?></p>
 					</td>
 				</tr>
+				<?php
+				/**
+				 * Add extra fields to tenant creation form
+				 *
+				 * @since 1.0.4
+				 */
+				do_action( 'grabwp_tenancy_create_form_fields' );
+				?>
 			</table>
 			<p class="submit">
 				<button type="submit" class="button button-primary">

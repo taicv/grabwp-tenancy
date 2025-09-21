@@ -71,8 +71,6 @@ class GrabWP_Tenancy_Assets {
 		wp_localize_script( $handle, 'grabwpTenancyPublic', $data );
 		wp_enqueue_script( $handle );
 
-		// Load extra JS if configured
-		$this->load_extra_js_file();
 	}
 
 	/**
@@ -99,52 +97,7 @@ class GrabWP_Tenancy_Assets {
 		wp_localize_script( $handle, 'grabwpTenancyAdmin', $data );
 		wp_enqueue_script( $handle );
 
-		// Load extra JS if configured
-		$this->load_extra_js_file();
 	}
 
-	/**
-	 * Load extra JS file if configured
-	 */
-	private function load_extra_js_file() {
-		$config   = GrabWP_Tenancy_Config::get_tenant_config();
-		$extra_js = $config['load_extra_js_file'] ?? '';
 
-		if ( empty( $extra_js ) ) {
-			return;
-		}
-
-		// Validate file exists
-		$file_path = $this->plugin->plugin_dir . 'assets/js/extra/' . $extra_js;
-		if ( ! file_exists( $file_path ) ) {
-			return;
-		}
-
-		// Enqueue the extra JS file
-		$handle  = 'grabwp-tenancy-extra-' . sanitize_title( $extra_js );
-		$src     = $this->plugin->plugin_url . 'assets/js/extra/' . $extra_js;
-		$version = filemtime( $file_path );
-
-		wp_register_script( $handle, $src, array( 'jquery' ), $version, true );
-		wp_enqueue_script( $handle );
-	}
-
-	/**
-	 * Get available extra JS files
-	 *
-	 * @return array Array of JS file names
-	 */
-	public function get_available_extra_js_files() {
-		$extra_dir = $this->plugin->plugin_dir . 'assets/js/extra/';
-		$files     = array();
-
-		if ( is_dir( $extra_dir ) ) {
-			$js_files = glob( $extra_dir . '*.js' );
-			foreach ( $js_files as $file ) {
-				$files[] = basename( $file );
-			}
-		}
-
-		return $files;
-	}
 }

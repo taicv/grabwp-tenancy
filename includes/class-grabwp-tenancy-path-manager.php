@@ -35,10 +35,10 @@ class GrabWP_Tenancy_Path_Manager {
 	 * @return string Base directory path for tenant data
 	 */
 	public static function get_configured_base_path() {
-		// 1. Check for user-configured path (placeholder for future feature)
-		$config_path = self::get_user_configured_path();
-		if ( $config_path ) {
-			return $config_path;
+
+		// 1. Check if GRABWP_TENANCY_BASE_DIR is defined (for plugin activated on tenant sites)
+		if ( defined( 'GRABWP_TENANCY_BASE_DIR' ) ) {
+			return GRABWP_TENANCY_BASE_DIR;
 		}
 
 		// 2. Simple legacy detection for existing installations
@@ -46,21 +46,14 @@ class GrabWP_Tenancy_Path_Manager {
 			return WP_CONTENT_DIR . '/grabwp';
 		}
 
-		// 3. Default to new WordPress-compliant structure
+		// 3. 
+		if ( file_exists( WP_CONTENT_DIR . '/uploads/grabwp-tenancy/tenants.php' ) ) {
+			return WP_CONTENT_DIR . '/uploads/grabwp-tenancy';
+		}
+
+		// 4. Default to new WordPress-compliant structure
 		$upload_dir = wp_upload_dir();
 		return $upload_dir['basedir'] . '/grabwp-tenancy';
-	}
-
-	/**
-	 * Get user-configured base path (future feature placeholder)
-	 *
-	 * @return string|false User-configured path or false if not set
-	 */
-	private static function get_user_configured_path() {
-		// TODO: Implement user configuration reading
-		// This will read from your future config file/option
-		// Example: return get_option('grabwp_tenancy_custom_path', false);
-		return false;
 	}
 
 	/**
@@ -145,7 +138,7 @@ class GrabWP_Tenancy_Path_Manager {
 	 * @param string $filename Config filename
 	 * @return string Config file path
 	 */
-	public static function get_config_file_path( $filename = 'default-tenant-option.php' ) {
+	public static function get_config_file_path( $filename = '' ) {
 		$base_path = self::get_configured_base_path();
 		return $base_path . '/' . $filename;
 	}

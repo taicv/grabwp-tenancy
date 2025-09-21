@@ -52,7 +52,7 @@ class GrabWP_Tenancy_Admin_Notice {
 		}
 
 		// Show info notice for legacy structure usage
-		// TODO: Add this back in
+		// TODO: Add this back in from 1.1
 		if ( $path_status['using_old'] ) {
 			// echo '<div class="notice notice-info"><p><strong>GrabWP Tenancy:</strong> Using legacy path structure for backward compatibility. New tenants will use the same structure for consistency.</p></div>';
 		} elseif ( $path_status['is_custom'] ) {

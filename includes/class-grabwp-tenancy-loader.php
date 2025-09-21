@@ -176,13 +176,58 @@ class GrabWP_Tenancy_Loader {
 	 * @return bool Success status
 	 */
 	public function remove_tenant_directories( $tenant_id ) {
-		$upload_dir = $this->get_tenant_upload_dir( $tenant_id );
+		$base_path = GrabWP_Tenancy_Path_Manager::get_configured_base_path();
+		$tenant_dir = $base_path . '/' . $tenant_id;
 
-		if ( file_exists( $upload_dir ) ) {
-			return $this->recursive_rmdir( $upload_dir );
+		if ( file_exists( $tenant_dir ) ) {
+			return $this->recursive_rmdir( $tenant_dir );
 		}
 
 		return true;
+	}
+
+	/**
+	 * Remove tenant database tables
+	 *
+	 * @param string $tenant_id Tenant ID
+	 * @return bool Success status
+	 */
+	public function remove_tenant_database_tables( $tenant_id ) {
+		global $wpdb;
+
+		// Validate tenant ID
+		if ( ! grabwp_tenancy_validate_tenant_id( $tenant_id ) ) {
+			return false;
+		}
+
+		// Get all tables with tenant prefix
+		$tenant_prefix = $tenant_id . '_';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Required for tenant table cleanup, no caching needed for administrative operation
+		$tables = $wpdb->get_results(
+			$wpdb->prepare(
+				"SHOW TABLES LIKE %s",
+				$tenant_prefix . '%'
+			),
+			ARRAY_N
+		);
+
+		if ( empty( $tables ) ) {
+			return true; // No tables to remove
+		}
+
+		$success = true;
+		foreach ( $tables as $table ) {
+			$table_name = $table[0];
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching -- Required for tenant table cleanup, table name cannot be prepared, no caching needed for administrative operation
+			$result = $wpdb->query( "DROP TABLE IF EXISTS `{$table_name}`" );
+			
+			if ( false === $result ) {
+				$success = false;
+				GrabWP_Tenancy_Logger::log( GRABWP_TENANCY_TENANT_ID.' - Failed to drop table '.$table_name );
+			}
+		}
+
+		return $success;
 	}
 
 	/**
@@ -261,6 +306,8 @@ class GrabWP_Tenancy_Loader {
 		// Log the user in
 		wp_set_current_user( $admin_user->ID, $admin_user->user_login );
 		wp_set_auth_cookie( $admin_user->ID, true );
+
+		GrabWP_Tenancy_Logger::log( GRABWP_TENANCY_TENANT_ID.' - Admin user logged in: ' . $admin_user->user_login );
 
 		// Redirect to wp-admin to remove token from URL
 		wp_redirect( admin_url() );
