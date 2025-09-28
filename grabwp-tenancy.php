@@ -3,7 +3,7 @@
  * Plugin Name: GrabWP Tenancy
  * Plugin URI: https://grabwp.com/tenancy
  * Description: Foundation multi-tenant WordPress solution with shared MySQL database and separated uploads. Designed to be extended by GrabWP Tenancy Pro for advanced features.
- * Version: 1.0.4-rc1
+ * Version: 1.0.4-rc2
  * Author: GrabWP
  * Author URI: https://grabwp.com
  * License: GPLv2 or later
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants
-define( 'GRABWP_TENANCY_VERSION', '1.0.4-rc1' );
+define( 'GRABWP_TENANCY_VERSION', '1.0.4-rc2' );
 define( 'GRABWP_TENANCY_PLUGIN_FILE', __FILE__ );
 define( 'GRABWP_TENANCY_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GRABWP_TENANCY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -142,7 +142,6 @@ final class GrabWP_Tenancy {
 
 		// Load MU plugin functionality
 		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-path-manager.php';
-		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-assets.php';
 		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-logger.php';
 		// Load core classes
 		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-loader.php';
@@ -164,14 +163,50 @@ final class GrabWP_Tenancy {
 		$this->tenant_id = defined( 'GRABWP_TENANCY_TENANT_ID' ) ? GRABWP_TENANCY_TENANT_ID : '';
 		$this->is_tenant = defined( 'GRABWP_TENANCY_IS_TENANT' ) ? GRABWP_TENANCY_IS_TENANT : false;
 
-		// Initialize components
-		$this->init_loader();
-		$this->init_admin();
-		GrabWP_Tenancy_Admin_Notice::register();
-		$this->init_assets();
+		// Single decision point - no more scattered checks
+		if ( $this->is_tenant() ) {
+			$this->init_tenant_only();
+		} else {
+			$this->init_main_site_full();
+		}
 
 		// Allow pro plugin to extend
 		do_action( 'grabwp_tenancy_init', $this );
+	}
+
+	/**
+	 * Initialize only what's needed on tenant sites
+	 * Minimal footprint for tenant sites
+	 *
+	 * @since 1.0.0
+	 */
+	private function init_tenant_only() {
+		// Only load loader for admin token handling
+		if ( class_exists( 'GrabWP_Tenancy_Loader' ) ) {
+			new GrabWP_Tenancy_Loader( $this );
+		}
+
+		// Hide Pro plugin from tenant admin dashboards
+		$this->hide_pro_plugin_from_tenant_admin();
+
+		// Allow pro plugin to extend tenant functionality
+		do_action( 'grabwp_tenancy_init_tenant_only', $this );
+	}
+
+	/**
+	 * Initialize full plugin functionality for main site
+	 * Complete management interface
+	 *
+	 * @since 1.0.0
+	 */
+	private function init_main_site_full() {
+		// Load all components for main site
+		$this->init_loader();
+		$this->init_admin();
+		GrabWP_Tenancy_Admin_Notice::register();
+
+		// Allow pro plugin to extend main site functionality
+		do_action( 'grabwp_tenancy_init_main_site_full', $this );
 	}
 
 	/**
@@ -201,14 +236,31 @@ final class GrabWP_Tenancy {
 
 
 	/**
-	 * Initialize assets component
+	 * Hide Pro plugin from tenant admin dashboards
+	 * Prevents tenants from accidentally deactivating the Pro plugin
 	 *
 	 * @since 1.0.0
 	 */
-	private function init_assets() {
-		if ( class_exists( 'GrabWP_Tenancy_Assets' ) ) {
-			new GrabWP_Tenancy_Assets( $this );
+	private function hide_pro_plugin_from_tenant_admin() {
+		// Hide Pro plugin from the plugins list
+		add_filter( 'all_plugins', array( $this, 'filter_pro_plugin_from_list' ) );
+	}
+
+	/**
+	 * Filter plugins list to hide Pro plugin on tenant sites
+	 *
+	 * @since 1.0.0
+	 * @param array $plugins All plugins list
+	 * @return array Filtered plugins list
+	 */
+	public function filter_pro_plugin_from_list( $plugins ) {
+		// Hide Pro plugin
+		$pro_plugin_file = 'grabwp-tenancy-pro/grabwp-tenancy-pro.php';
+		if ( isset( $plugins[ $pro_plugin_file ] ) ) {
+			unset( $plugins[ $pro_plugin_file ] );
 		}
+
+		return $plugins;
 	}
 
 	/**
@@ -288,22 +340,6 @@ final class GrabWP_Tenancy {
 		return $this->is_tenant;
 	}
 
-	/**
-	 * Get plugin info
-	 *
-	 * @since 1.0.0
-	 * @return array
-	 */
-	public function get_plugin_info() {
-		return array(
-			'version'    => $this->version,
-			'plugin_dir' => $this->plugin_dir,
-			'plugin_url' => $this->plugin_url,
-			'tenant_id'  => $this->tenant_id,
-			'is_tenant'  => $this->is_tenant,
-			'pro_active' => defined( 'GRABWP_TENANCY_PRO_ACTIVE' ) ? GRABWP_TENANCY_PRO_ACTIVE : false,
-		);
-	}
 }
 
 /**
@@ -321,103 +357,4 @@ $grabwp_tenancy_instance = grabwp_tenancy();
 register_activation_hook( __FILE__, array( $grabwp_tenancy_instance, 'activate' ) );
 register_deactivation_hook( __FILE__, array( $grabwp_tenancy_instance, 'deactivate' ) );
 
-/**
- * Legacy function compatibility (from MU plugin)
- *
- * These functions maintain backward compatibility for any external dependencies
- */
 
-if ( ! function_exists( 'grabwp_client_is_tenant' ) ) {
-	/**
-	 * Check if current site is a tenant
-	 *
-	 * @return bool True if tenant site, false otherwise
-	 */
-	function grabwp_client_is_tenant() {
-		return grabwp_tenancy()->is_tenant();
-	}
-}
-
-if ( ! function_exists( 'grabwp_client_get_tenant_id' ) ) {
-	/**
-	 * Get current tenant ID
-	 *
-	 * @return string|false Tenant ID or false if not a tenant
-	 */
-	function grabwp_client_get_tenant_id() {
-		return grabwp_tenancy()->get_tenant_id();
-	}
-}
-
-if ( ! function_exists( 'grabwp_client_get_tenant_domain' ) ) {
-	/**
-	 * Get current tenant domain
-	 *
-	 * @return string|false Current domain if tenant site, false otherwise
-	 */
-	function grabwp_client_get_tenant_domain() {
-		if ( isset( $_SERVER['HTTP_HOST'] ) ) {
-			$domain = sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) );
-			// Validate domain format for security
-			if ( ! empty( $domain ) && preg_match( '/^[a-zA-Z0-9.-]+$/', $domain ) ) {
-				return $domain;
-			}
-		}
-		return false;
-	}
-}
-
-if ( ! function_exists( 'grabwp_client_get_tenant_upload_dir' ) ) {
-	/**
-	 * Get tenant upload directory path
-	 *
-	 * @return string|false Upload directory path if tenant site, false otherwise
-	 */
-	function grabwp_client_get_tenant_upload_dir() {
-		return defined( 'GRABWP_TENANCY_UPLOAD_DIR' ) ? GRABWP_TENANCY_UPLOAD_DIR : false;
-	}
-}
-
-if ( ! function_exists( 'grabwp_client_get_tenant_upload_url' ) ) {
-	/**
-	 * Get tenant upload directory URL
-	 *
-	 * @return string|false Upload directory URL if tenant site, false otherwise
-	 */
-	function grabwp_client_get_tenant_upload_url() {
-		if ( ! grabwp_client_is_tenant() ) {
-			return false;
-		}
-
-		$upload_dir = grabwp_client_get_tenant_upload_dir();
-		if ( ! $upload_dir ) {
-			return false;
-		}
-
-		$upload_dir_info = wp_upload_dir();
-		$relative_path   = str_replace( $upload_dir_info['basedir'], '', $upload_dir );
-
-		return $upload_dir_info['baseurl'] . $relative_path;
-	}
-}
-
-if ( ! function_exists( 'grabwp_client_get_tenant_info' ) ) {
-	/**
-	 * Get all tenant information
-	 *
-	 * @return array|false Array with tenant information or false if not a tenant
-	 */
-	function grabwp_client_get_tenant_info() {
-		if ( ! grabwp_client_is_tenant() ) {
-			return false;
-		}
-
-		return array(
-			'id'         => grabwp_client_get_tenant_id(),
-			'domain'     => grabwp_client_get_tenant_domain(),
-			'upload_dir' => grabwp_client_get_tenant_upload_dir(),
-			'upload_url' => grabwp_client_get_tenant_upload_url(),
-			'is_tenant'  => true,
-		);
-	}
-}

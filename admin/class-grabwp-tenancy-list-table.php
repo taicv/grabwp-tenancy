@@ -243,33 +243,6 @@ class GrabWP_Tenancy_List_Table extends WP_List_Table {
 		return array();
 	}
 
-	/**
-	 * Get tenants data (optimized for pagination)
-	 *
-	 * @return array
-	 */
-	private function get_tenants() {
-		// Get raw mappings data
-		$tenant_mappings = $this->get_tenant_mappings();
-		
-		if ( empty( $tenant_mappings ) ) {
-			return array();
-		}
-
-		// Convert to tenant objects only for current page
-		$tenants = array();
-		foreach ( array_reverse( $tenant_mappings, true ) as $tenant_id => $domains ) {
-			$tenant = new GrabWP_Tenancy_Tenant(
-				$tenant_id,
-				array(
-					'domains' => $domains,
-				)
-			);
-			$tenants[] = $tenant;
-		}
-
-		return $tenants;
-	}
 
 	/**
 	 * Display tenant ID column
@@ -493,43 +466,6 @@ class GrabWP_Tenancy_List_Table extends WP_List_Table {
 		return $filtered_mappings;
 	}
 
-	/**
-	 * Filter tenants by search term (legacy method for backward compatibility)
-	 *
-	 * @param array  $tenants Array of tenant objects
-	 * @param string $search_term Search term
-	 * @return array Filtered tenants
-	 */
-	private function filter_tenants_by_search( $tenants, $search_term ) {
-		$filtered_tenants = array();
-		$search_term_lower = strtolower( $search_term );
-
-		foreach ( $tenants as $tenant ) {
-			$match = false;
-
-			// Search by tenant ID (exact match)
-			if ( strtolower( $tenant->get_id() ) === $search_term_lower ) {
-				$match = true;
-			}
-
-			// Search by domain (partial match)
-			if ( ! $match ) {
-				$domains = $tenant->get_domains();
-				foreach ( $domains as $domain ) {
-					if ( false !== strpos( strtolower( $domain ), $search_term_lower ) ) {
-						$match = true;
-						break;
-					}
-				}
-			}
-
-			if ( $match ) {
-				$filtered_tenants[] = $tenant;
-			}
-		}
-
-		return $filtered_tenants;
-	}
 
 	/**
 	 * Display extra tablenav (search box in bulk actions area)

@@ -152,6 +152,17 @@ class GrabWP_Tenancy_Path_Manager {
 		return self::get_config_file_path( 'tokens.php' );
 	}
 
+
+	/**
+	 * Check if old structure is being used
+	 *
+	 * @return bool True if old structure detected
+	 */
+	public static function is_using_old_structure() {
+		$current_base = self::get_configured_base_path();
+		return $current_base === WP_CONTENT_DIR . '/grabwp';
+	}
+
 	/**
 	 * Ensure directory exists (create if needed)
 	 *
@@ -166,15 +177,6 @@ class GrabWP_Tenancy_Path_Manager {
 		return wp_mkdir_p( $path );
 	}
 
-	/**
-	 * Check if old structure is being used
-	 *
-	 * @return bool True if old structure detected
-	 */
-	public static function is_using_old_structure() {
-		$current_base = self::get_configured_base_path();
-		return $current_base === WP_CONTENT_DIR . '/grabwp';
-	}
 
 	/**
 	 * Get current structure type

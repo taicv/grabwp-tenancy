@@ -4,6 +4,8 @@
  *
  * Contains all utility functions for early tenant initialization.
  * This file is included by load.php before WordPress loads.
+ * Function with boot prefix are used to initialize the tenant system, no need to override them in pro plugin
+ * Functions with pro prefix are used to extend the tenant system, they can be overridden in pro plugin
  *
  * @package GrabWP_Tenancy
  * @since 1.0.3
@@ -163,6 +165,10 @@ function grabwp_tenancy_sanitize_url( $url ) {
  * @return bool True if valid
  */
 function grabwp_tenancy_validate_tenant_id( $tenant_id ) {
+	if ( function_exists( 'grabwp_tenancy_pro_validate_tenant_id' ) ) {
+		return grabwp_tenancy_pro_validate_tenant_id( $tenant_id );
+	}
+
 	if ( empty( $tenant_id ) || ! is_string( $tenant_id ) ) {
 		return false;
 	}
@@ -254,6 +260,9 @@ function grabwp_tenancy_validate_tenant_id( $tenant_id ) {
  * @return bool True if valid domain format
  */
 function grabwp_tenancy_validate_domain( $domain ) {
+	if ( function_exists( 'grabwp_tenancy_pro_validate_domain' ) ) {
+		return grabwp_tenancy_pro_validate_domain( $domain );
+	}
 	if ( empty( $domain ) || ! is_string( $domain ) ) {
 		return false;
 	}
@@ -317,6 +326,9 @@ function grabwp_tenancy_validate_domain( $domain ) {
  * @return array Array containing sanitized host and protocol
  */
 function grabwp_tenancy_get_server_info() {
+	if ( function_exists( 'grabwp_tenancy_pro_get_server_info' ) ) {
+		return grabwp_tenancy_pro_get_server_info();
+	}
 	// Cache server info to avoid multiple $_SERVER access
 	static $server_info = null;
 
@@ -365,17 +377,8 @@ function grabwp_tenancy_get_server_info() {
 
 /**
  * Define essential WordPress constants for early loading
- *
- * @param string $tenant_id Optional tenant identifier
  */
-function grabwp_tenancy_define_constants( $tenant_id = '' ) {
-	// Use pro version if available
-	if ( function_exists( 'grabwp_tenancy_pro_define_constants' ) ) {
-		grabwp_tenancy_pro_define_constants( $tenant_id );
-		return;
-	}
-	
-	// Base plugin version
+function grabwp_tenancy_boot_define_constants() {
 	// Define ABSPATH if not already defined
 	if ( ! defined( 'ABSPATH' ) ) {
 		// Note: Using dirname() here is necessary for early loading in wp-config.php
@@ -421,23 +424,19 @@ function grabwp_tenancy_define_constants( $tenant_id = '' ) {
 		define( 'DISABLE_FILE_MODS', true );
 	}
 
-	grabwp_tenancy_set_uploads_paths( $tenant_id );
+	grabwp_tenancy_set_uploads_paths();
 }
 
 /**
  * Set content paths for tenant isolation
- *
- * @param string $tenant_id Tenant identifier
  */
-function grabwp_tenancy_set_uploads_paths( $tenant_id ) {
-	// Base plugin version
-	// Validate tenant ID
-	if ( ! grabwp_tenancy_validate_tenant_id( $tenant_id ) ) {
+function grabwp_tenancy_set_uploads_paths() {
+	if ( function_exists( 'grabwp_tenancy_pro_set_uploads_paths' ) ) {
+		grabwp_tenancy_pro_set_uploads_paths();
 		return;
 	}
-
 	// Use GRABWP_TENANCY_BASE_DIR which is now properly defined
-	$upload_dir = GRABWP_TENANCY_BASE_DIR . '/' . $tenant_id . '/uploads';
+	$upload_dir = GRABWP_TENANCY_BASE_DIR . '/' . GRABWP_TENANCY_TENANT_ID . '/uploads';
 	$upload_relative = str_replace( ABSPATH, '', $upload_dir );
 	
 	define( 'GRABWP_TENANCY_UPLOAD_DIR', $upload_dir );
@@ -490,6 +489,10 @@ function grabwp_tenancy_load_tenant_mappings() {
  * @return string|false Tenant ID or false if not found
  */
 function grabwp_tenancy_identify_tenant( $domain, $mappings ) {
+	if ( function_exists( 'grabwp_tenancy_pro_identify_tenant' ) ) {
+		grabwp_tenancy_pro_identify_tenant( $domain, $mappings );
+		return;
+	}
 	if ( empty( $domain ) || ! is_array( $mappings ) ) {
 		return false;
 	}
@@ -498,6 +501,7 @@ function grabwp_tenancy_identify_tenant( $domain, $mappings ) {
 		if ( is_array( $domains ) ) {
 			foreach ( $domains as $domain_entry ) {
 				if ( $domain === $domain_entry ) {
+					define( 'GRABWP_TENANCY_TENANT_ID', $tenant_id );
 					return $tenant_id;
 				}
 			}
@@ -516,12 +520,7 @@ function grabwp_tenancy_identify_tenant( $domain, $mappings ) {
  *
  * @param string $tenant_id Tenant identifier
  */
-function grabwp_tenancy_set_tenant_context( $tenant_id ) {
-	// Use pro version if available
-	if ( function_exists( 'grabwp_tenancy_pro_set_tenant_context' ) ) {
-		grabwp_tenancy_pro_set_tenant_context( $tenant_id );
-		return;
-	}
+function grabwp_tenancy_boot_set_tenant_context() {
 	// Check if tenant context is already defined
 	if ( defined( 'GRABWP_TENANCY_TENANT_ID' ) ) {
 		if ( ! defined( 'GRABWP_TENANCY_IS_TENANT' ) ) {
@@ -529,26 +528,16 @@ function grabwp_tenancy_set_tenant_context( $tenant_id ) {
 		}
 		return;
 	}
-
-	if ( grabwp_tenancy_validate_tenant_id( $tenant_id ) ) {
-		define( 'GRABWP_TENANCY_TENANT_ID', $tenant_id );
-		define( 'GRABWP_TENANCY_IS_TENANT', true );
-	} else {
-		define( 'GRABWP_TENANCY_IS_TENANT', false );
-		define( 'GRABWP_TENANCY_TENANT_ID', '' );
-	}
 }
 
 /**
  * Set database prefix for tenant isolation
- *
- * @param string $tenant_id Tenant identifier
  */
-function grabwp_tenancy_set_database_prefix( $tenant_id ) {
-	if ( ! grabwp_tenancy_validate_tenant_id( $tenant_id ) ) {
+function grabwp_tenancy_set_database_prefix() {
+	if ( function_exists( 'grabwp_tenancy_pro_set_database_prefix' ) ) {
+		grabwp_tenancy_pro_set_database_prefix();
 		return;
 	}
-
 	global $table_prefix, $wpdb;
 
 	// Store original prefix
@@ -557,7 +546,7 @@ function grabwp_tenancy_set_database_prefix( $tenant_id ) {
 	}
 
 	// Set tenant-specific prefix
-	$table_prefix = $tenant_id . '_';
+	$table_prefix = GRABWP_TENANCY_TENANT_ID . '_';
 
 	// Define table prefix constant for reference
 	if ( ! defined( 'GRABWP_TENANCY_TABLE_PREFIX' ) ) {
@@ -566,31 +555,18 @@ function grabwp_tenancy_set_database_prefix( $tenant_id ) {
 
 	// Update $wpdb prefix if it exists (for CLI commands)
 	if ( isset( $wpdb ) && is_object( $wpdb ) ) {
-		$wpdb->prefix = $tenant_id . '_';
+		$wpdb->prefix = GRABWP_TENANCY_TENANT_ID . '_';
 		if ( method_exists( $wpdb, 'set_prefix' ) ) {
-			$wpdb->set_prefix( $tenant_id . '_' );
+			$wpdb->set_prefix( GRABWP_TENANCY_TENANT_ID . '_' );
 		}
 	}
 }
 
 /**
  * Configure tenant-specific settings
- *
- * @param string $tenant_id Tenant identifier
  */
-function grabwp_tenancy_configure_tenant( $tenant_id ) {
-	// Use pro version if available
-	if ( function_exists( 'grabwp_tenancy_pro_configure_tenant' ) ) {
-		grabwp_tenancy_pro_configure_tenant( $tenant_id );
-		return;
-	}
-	
-	// Base plugin version
-	if ( ! grabwp_tenancy_validate_tenant_id( $tenant_id ) ) {
-		return;
-	}
-
-	grabwp_tenancy_set_database_prefix( $tenant_id );
+function grabwp_tenancy_boot_configure_tenant() {
+	grabwp_tenancy_set_database_prefix();
 }
 
 // =============================================================================
@@ -603,6 +579,10 @@ function grabwp_tenancy_configure_tenant( $tenant_id ) {
  * @param string $tenant_id Tenant identifier for CLI context
  */
 function grabwp_tenancy_configure_cli_environment() {
+	if ( function_exists( 'grabwp_tenancy_pro_configure_cli_environment' ) ) {
+		grabwp_tenancy_pro_configure_cli_environment();
+		return;
+	}
 	// Set debug & development constants for CLI
 	if ( ! defined( 'DISALLOW_FILE_MODS' ) ) {
 		define( 'DISALLOW_FILE_MODS', false );
@@ -611,7 +591,7 @@ function grabwp_tenancy_configure_cli_environment() {
 		define( 'WP_DEBUG', false );
 	}
 	if ( ! defined( 'WP_DEBUG_LOG' ) ) {
-		define( 'WP_DEBUG_LOG', true );
+		define( 'WP_DEBUG_LOG', false );
 	}
 	if ( ! defined( 'WP_DEBUG_DISPLAY' ) ) {
 		define( 'WP_DEBUG_DISPLAY', false );
@@ -626,6 +606,10 @@ function grabwp_tenancy_configure_cli_environment() {
  * @return string Domain for CLI context
  */
 function grabwp_tenancy_get_cli_domain( $tenant_id, $tenant_mappings ) {
+	if ( function_exists( 'grabwp_tenancy_pro_get_cli_domain' ) ) {
+		grabwp_tenancy_pro_get_cli_domain( $tenant_id, $tenant_mappings );
+		return;
+	}
 	// Get current domain from mappings for CLI
 	if ( isset( $tenant_mappings[ $tenant_id ] ) && ! empty( $tenant_mappings[ $tenant_id ][0] ) ) {
 		return $tenant_mappings[ $tenant_id ][0]; // Primary domain
@@ -638,11 +622,19 @@ function grabwp_tenancy_get_cli_domain( $tenant_id, $tenant_mappings ) {
 /**
  * Detect tenant from CLI or domain
  */
-function grabwp_tenancy_detect_tenant() {
+function grabwp_tenancy_boot_detect_tenant() {
 	// CLI: Check for pre-defined tenant ID
 	if ( defined( 'GRABWP_TENANCY_TENANT_ID' ) && GRABWP_TENANCY_TENANT_ID !== '' ) {
 		grabwp_tenancy_configure_cli_environment();
 		return GRABWP_TENANCY_TENANT_ID;
+	}
+
+	// Cron: Handle cron requests with tenant context
+	if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+		// For cron, we need to determine which tenant context to use
+		// This could be based on a default tenant or the main site
+		// For now, return false to use main site context
+		return false;
 	}
 
 	// Web: Get domain and find tenant
@@ -664,14 +656,19 @@ function grabwp_tenancy_early_init() {
 		return;
 	}
 	
-	// Base plugin version
-	$tenant_id = grabwp_tenancy_detect_tenant();
+	// Detect tenant and set tenant ID
+	$tenant_id = grabwp_tenancy_boot_detect_tenant();
 
-	if ( ! $tenant_id ) {
+	if ( ! $tenant_id || ! grabwp_tenancy_validate_tenant_id( $tenant_id ) ) {
 		return;
 	}
 
-	grabwp_tenancy_set_tenant_context( $tenant_id );
-	grabwp_tenancy_define_constants( $tenant_id );
-	grabwp_tenancy_configure_tenant( $tenant_id );
+	// Set tenant context (Is Tenant)
+	grabwp_tenancy_boot_set_tenant_context();
+
+	// Define constants (Directories, URLs, Home Constants, Security Constants)
+	grabwp_tenancy_boot_define_constants();
+
+	// Configure tenant (Database)
+	grabwp_tenancy_boot_configure_tenant();
 }

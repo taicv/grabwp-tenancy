@@ -37,7 +37,11 @@ class GrabWP_Tenancy_Admin {
 	 */
 	public function __construct( $plugin ) {
 		$this->plugin = $plugin;
-		$this->init_hooks();
+		
+		// Only initialize if not a tenant site
+		if ( ! $this->plugin->is_tenant() ) {
+			$this->init_hooks();
+		}
 	}
 
 	/**
@@ -61,13 +65,10 @@ class GrabWP_Tenancy_Admin {
 	}
 
 	/**
-	 * Handle form submissions before any output - only on main site
+	 * Handle form submissions before any output
+	 * Only called on main site since admin class is not instantiated on tenant sites
 	 */
 	public function handle_form_submissions() {
-		// Don't handle form submissions on tenant sites
-		if ( $this->plugin->is_tenant() ) {
-			return;
-		}
 
 		// Check capabilities first
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -201,13 +202,10 @@ class GrabWP_Tenancy_Admin {
 	}
 
 	/**
-	 * Add admin menu - only on main site, not on tenant sites
+	 * Add admin menu
+	 * Only called on main site since admin class is not instantiated on tenant sites
 	 */
 	public function add_admin_menu() {
-		// Don't show admin UI on tenant sites
-		if ( $this->plugin->is_tenant() ) {
-			return;
-		}
 
 		add_menu_page(
 			__( 'GrabWP Tenancy', 'grabwp-tenancy' ),
@@ -270,10 +268,7 @@ class GrabWP_Tenancy_Admin {
 	 * Enqueue admin scripts and styles - only on main site
 	 */
 	public function enqueue_admin_scripts( $hook ) {
-		// Don't load admin assets on tenant sites
-		if ( $this->plugin->is_tenant() ) {
-			return;
-		}
+		// Only called on main site since admin class is not instantiated on tenant sites
 
 		// Check if we need to show admin notices (plugin not properly configured)
 		$needs_notice = ! defined( 'GRABWP_TENANCY_LOADED' );
@@ -928,13 +923,10 @@ class GrabWP_Tenancy_Admin {
 	}
 
 	/**
-	 * Admin notices - only on main site
+	 * Admin notices
+	 * Only called on main site since admin class is not instantiated on tenant sites
 	 */
 	public function admin_notices() {
-		// Don't show admin notices on tenant sites
-		if ( $this->plugin->is_tenant() ) {
-			return;
-		}
 
 		// Show notices for admin pages
 		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
