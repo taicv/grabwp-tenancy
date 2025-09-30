@@ -4,7 +4,7 @@ Tags: multi-tenant, tenancy, isolation, routing, domains
 Requires at least: 5.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Plugin URI: https://grabwp.com
@@ -72,6 +72,17 @@ The plugin is designed to be compatible with most WordPress plugins. However, pl
 **📖 Need detailed setup instructions?** Visit our [complete documentation](https://grabwp.com) for step-by-step guides and troubleshooting.
 
 == Changelog ==
+
+= 1.0.4 =
+- Enhance tenant management with a new list table for admin
+- Implement logging functionality, and improve tenant deletion process with confirmation prompts.
+- Refactor path management and database handling for better organization and security.
+- Update translations and enhance admin UI elements for improved user experience.
+- Refactor tenant initialization process to streamline functionality for tenant and main site.
+- Remove deprecated asset loading class and configuration management.
+- Enhance tenant context handling and improve upload directory management.
+- Introduce hooks for pro plugin extensibility and improve code organization for better maintainability.
+
 
 = 1.0.3 =
 * **Major Enhancement**: Added comprehensive early loading system with load-helper.php
