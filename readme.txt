@@ -74,7 +74,8 @@ The plugin is designed to be compatible with most WordPress plugins. However, pl
 == Changelog ==
 
 = 1.0.5 =
-- Fix: Tenant ID start with number cause SQLite error
+- New: Settings page for tenant capability controls (Disallow File Mods, Disallow File Edit, Hide Plugin Management, Hide Theme Management, Hide GrabWP Plugins)
+- Fix: Tenant ID starting with a number causes database errors on table prefix
 
 = 1.0.4 =
 - Enhance tenant management with a new list table for admin
