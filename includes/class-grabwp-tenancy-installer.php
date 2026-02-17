@@ -66,28 +66,6 @@ class GrabWP_Tenancy_Installer {
 		$htaccess_content .= "    </IfModule>\n";
 		$htaccess_content .= "</FilesMatch>\n\n";
 
-		$htaccess_content .= "# Deny access to hidden files and directories\n";
-		$htaccess_content .= "<FilesMatch \"^\\.*\">\n";
-		$htaccess_content .= "    <IfModule mod_authz_core.c>\n";
-		$htaccess_content .= "        Require all denied\n";
-		$htaccess_content .= "    </IfModule>\n";
-		$htaccess_content .= "    <IfModule !mod_authz_core.c>\n";
-		$htaccess_content .= "        Order allow,deny\n";
-		$htaccess_content .= "        Deny from all\n";
-		$htaccess_content .= "    </IfModule>\n";
-		$htaccess_content .= "</FilesMatch>\n\n";
-
-		$htaccess_content .= "# Deny access to sensitive file types\n";
-		$htaccess_content .= "<FilesMatch \"\\.(txt|log|md|json)$\">\n";
-		$htaccess_content .= "    <IfModule mod_authz_core.c>\n";
-		$htaccess_content .= "        Require all denied\n";
-		$htaccess_content .= "    </IfModule>\n";
-		$htaccess_content .= "    <IfModule !mod_authz_core.c>\n";
-		$htaccess_content .= "        Order allow,deny\n";
-		$htaccess_content .= "        Deny from all\n";
-		$htaccess_content .= "    </IfModule>\n";
-		$htaccess_content .= "</FilesMatch>\n";
-
 		// Ensure directory exists
 		if ( ! file_exists( $directory ) ) {
 			$result = wp_mkdir_p( $directory );

@@ -186,6 +186,31 @@ class GrabWP_Tenancy_Admin {
 				}
 				break;
 
+			case 'save_settings':
+				if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'grabwp_tenancy_save_settings' ) ) {
+					$settings_instance = GrabWP_Tenancy_Settings::get_instance();
+
+					// Collect checkbox values from POST — unchecked checkboxes are absent from POST.
+					$raw_settings = array();
+					foreach ( array_keys( GrabWP_Tenancy_Settings::get_defaults() ) as $key ) {
+						$raw_settings[ $key ] = isset( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : '';
+					}
+
+					$result = $settings_instance->save( $raw_settings );
+
+					if ( $result ) {
+						$success_nonce = wp_create_nonce( 'grabwp_tenancy_notice' );
+						wp_safe_redirect( admin_url( 'admin.php?page=grabwp-tenancy-settings&message=settings_saved&_wpnonce=' . urlencode( $success_nonce ) ) );
+						exit;
+					} else {
+						set_transient( 'grabwp_tenancy_error', __( 'Failed to save settings. Please check file permissions.', 'grabwp-tenancy' ), 60 );
+						$error_nonce = wp_create_nonce( 'grabwp_tenancy_error' );
+						wp_safe_redirect( admin_url( 'admin.php?page=grabwp-tenancy-settings&error=1&_wpnonce=' . urlencode( $error_nonce ) ) );
+						exit;
+					}
+				}
+				break;
+
 			default:
 				/**
 				 * Handle custom tenant actions
@@ -352,9 +377,12 @@ class GrabWP_Tenancy_Admin {
 
 	/**
 	 * Settings page
+	 *
+	 * @since 1.1.0 Added tenant capability settings.
 	 */
 	public function settings_page() {
-		$this->render_admin_page( 'settings' );
+		$settings = GrabWP_Tenancy_Settings::get_instance();
+		$this->render_admin_page( 'settings', array( 'settings' => $settings->get_all() ) );
 	}
 
 	/**

@@ -3,7 +3,7 @@
  * Plugin Name: GrabWP Tenancy
  * Plugin URI: https://grabwp.com/tenancy
  * Description: Foundation multi-tenant WordPress solution with shared MySQL database and separated uploads. Designed to be extended by GrabWP Tenancy Pro for advanced features.
- * Version: 1.0.4
+ * Version: 1.0.5
  * Author: GrabWP
  * Author URI: https://grabwp.com
  * License: GPLv2 or later
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants
-define( 'GRABWP_TENANCY_VERSION', '1.0.4' );
+define( 'GRABWP_TENANCY_VERSION', '1.0.5' );
 define( 'GRABWP_TENANCY_PLUGIN_FILE', __FILE__ );
 define( 'GRABWP_TENANCY_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GRABWP_TENANCY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -146,6 +146,7 @@ final class GrabWP_Tenancy {
 		// Load core classes
 		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-loader.php';
 		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-tenant.php';
+		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-settings.php';
 		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-admin.php';
 		require_once $this->plugin_dir . 'includes/class-grabwp-tenancy-admin-notice.php';
 
@@ -186,11 +187,61 @@ final class GrabWP_Tenancy {
 			new GrabWP_Tenancy_Loader( $this );
 		}
 
+		// Apply tenant capability restrictions from settings.
+		$this->apply_tenant_settings();
+
 		// Hide Pro plugin from tenant admin dashboards
 		$this->hide_pro_plugin_from_tenant_admin();
 
+		// Hide GrabWP base plugin from tenant admin dashboards
+		$this->hide_grabwp_plugin_from_tenant_admin();
+
 		// Allow pro plugin to extend tenant functionality
 		do_action( 'grabwp_tenancy_init_tenant_only', $this );
+
+	}
+
+	/**
+	 * Apply tenant capability settings.
+	 *
+	 * Defines WordPress constants and hooks menus based on saved settings.
+	 *
+	 * @since 1.1.0
+	 */
+	private function apply_tenant_settings() {
+		$settings = GrabWP_Tenancy_Settings::get_instance();
+
+		// DISALLOW_FILE_MODS — controls plugin/theme install, update, and deletion.
+		if ( ! defined( 'DISALLOW_FILE_MODS' ) ) {
+			define( 'DISALLOW_FILE_MODS', $settings->get( 'disallow_file_mods' ) );
+		}
+
+		// DISALLOW_FILE_EDIT — controls the built-in theme/plugin editor.
+		if ( ! defined( 'DISALLOW_FILE_EDIT' ) ) {
+			define( 'DISALLOW_FILE_EDIT', $settings->get( 'disallow_file_edit' ) );
+		}
+
+		// Remove admin menus for plugin/theme management if configured.
+		if ( $settings->get( 'hide_plugin_management' ) || $settings->get( 'hide_theme_management' ) ) {
+			add_action( 'admin_menu', array( $this, 'remove_tenant_admin_menus' ), 999 );
+		}
+	}
+
+	/**
+	 * Remove plugin and theme admin menus from tenant dashboards.
+	 *
+	 * @since 1.1.0
+	 */
+	public function remove_tenant_admin_menus() {
+		$settings = GrabWP_Tenancy_Settings::get_instance();
+
+		if ( $settings->get( 'hide_plugin_management' ) ) {
+			remove_menu_page( 'plugins.php' );
+		}
+
+		if ( $settings->get( 'hide_theme_management' ) ) {
+			remove_menu_page( 'themes.php' );
+		}
 	}
 
 	/**
@@ -242,10 +293,25 @@ final class GrabWP_Tenancy {
 	 * @since 1.0.0
 	 */
 	private function hide_pro_plugin_from_tenant_admin() {
-		// Hide Pro plugin from the plugins list
-		add_filter( 'all_plugins', array( $this, 'filter_pro_plugin_from_list' ) );
+		$settings = GrabWP_Tenancy_Settings::get_instance();
+		if ( $settings->get( 'hide_grabwp_plugins' ) ) {
+			add_filter( 'all_plugins', array( $this, 'filter_pro_plugin_from_list' ) );
+		}
 	}
 
+
+	/**
+	 * Hide GrabWP base plugin from tenant admin dashboards
+	 *
+	 * @since 1.0.0
+	 */
+	private function hide_grabwp_plugin_from_tenant_admin() {
+		$settings = GrabWP_Tenancy_Settings::get_instance();
+		if ( $settings->get( 'hide_grabwp_plugins' ) ) {
+			add_filter( 'all_plugins', array( $this, 'filter_grabwp_plugin_from_list' ) );
+		}
+	}
+	
 	/**
 	 * Filter plugins list to hide Pro plugin on tenant sites
 	 *
@@ -258,6 +324,23 @@ final class GrabWP_Tenancy {
 		$pro_plugin_file = 'grabwp-tenancy-pro/grabwp-tenancy-pro.php';
 		if ( isset( $plugins[ $pro_plugin_file ] ) ) {
 			unset( $plugins[ $pro_plugin_file ] );
+		}
+
+		return $plugins;
+	}
+
+	/**
+	 * Filter plugins list to hide GrabWP base plugin on tenant sites
+	 *
+	 * @since 1.0.0
+	 * @param array $plugins All plugins list
+	 * @return array Filtered plugins list
+	 */
+	public function filter_grabwp_plugin_from_list( $plugins ) {
+		// Hide Pro plugin
+		$grabwp_plugin_file = 'grabwp-tenancy/grabwp-tenancy.php';
+		if ( isset( $plugins[ $grabwp_plugin_file ] ) ) {
+			unset( $plugins[ $grabwp_plugin_file ] );
 		}
 
 		return $plugins;

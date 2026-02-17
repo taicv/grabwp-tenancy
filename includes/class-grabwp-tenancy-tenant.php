@@ -75,12 +75,14 @@ class GrabWP_Tenancy_Tenant {
 	 * @return string Unique tenant ID
 	 */
 	public static function generate_id() {
-		$characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+		$letters = 'abcdefghijklmnopqrstuvwxyz';
+		$alphanumeric = 'abcdefghijklmnopqrstuvwxyz0123456789';
 		$id         = '';
 
-		for ( $i = 0; $i < 6; $i++ ) {
-			$id .= $characters[ wp_rand( 0, strlen( $characters ) - 1 ) ];
+		for ( $i = 0; $i < 5; $i++ ) {
+			$id .= $alphanumeric[ wp_rand( 0, strlen( $alphanumeric ) - 1 ) ];
 		}
+		$id = $letters[ wp_rand( 0, strlen( $letters ) - 1 ) ] . $id;
 
 		return $id;
 	}
