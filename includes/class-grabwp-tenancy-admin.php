@@ -262,7 +262,7 @@ class GrabWP_Tenancy_Admin {
 
 		// Edit page is hidden from menu, accessed via links
 		add_submenu_page(
-			'', // Hidden from menu
+			'Edit Tenant', // Hidden from menu
 			__( 'Edit Tenant', 'grabwp-tenancy' ),
 			__( 'Edit Tenant', 'grabwp-tenancy' ),
 			'manage_options',
@@ -277,6 +277,15 @@ class GrabWP_Tenancy_Admin {
 			'manage_options',
 			'grabwp-tenancy-settings',
 			array( $this, 'settings_page' )
+		);
+
+		add_submenu_page(
+			'grabwp-tenancy',
+			__( 'Status', 'grabwp-tenancy' ),
+			__( 'Status', 'grabwp-tenancy' ),
+			'manage_options',
+			'grabwp-tenancy-status',
+			array( $this, 'status_page' )
 		);
 
 		/**
@@ -327,6 +336,8 @@ class GrabWP_Tenancy_Admin {
 				'removeText'             => __( 'Remove', 'grabwp-tenancy' ),
 				'confirmMessage'         => __( 'To confirm deletion, type the tenant ID:', 'grabwp-tenancy' ),
 				'incorrectIdMessage'     => __( 'Incorrect tenant ID. Deletion cancelled.', 'grabwp-tenancy' ),
+				'muPluginNonce'          => wp_create_nonce( 'grabwp_install_mu_plugin' ),
+				'loaderNonce'            => wp_create_nonce( 'grabwp_install_loader' ),
 			)
 		);
 	}
@@ -383,6 +394,15 @@ class GrabWP_Tenancy_Admin {
 	public function settings_page() {
 		$settings = GrabWP_Tenancy_Settings::get_instance();
 		$this->render_admin_page( 'settings', array( 'settings' => $settings->get_all() ) );
+	}
+
+	/**
+	 * Status page
+	 *
+	 * @since 1.2.0
+	 */
+	public function status_page() {
+		$this->render_admin_page( 'status' );
 	}
 
 	/**

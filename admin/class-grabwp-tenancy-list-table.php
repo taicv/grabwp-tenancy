@@ -290,7 +290,7 @@ class GrabWP_Tenancy_List_Table extends WP_List_Table {
 		$domains = $item->get_domains();
 		if ( ! empty( $domains ) ) {
 			$site_url = ( is_ssl() ? 'https://' : 'http://' ) . $domains[0];
-			$actions[] = '<a href="' . esc_url( $site_url ) . '" target="_blank" class="button button-primary">' . esc_html__( 'Visit Site', 'grabwp-tenancy' ) . '</a>';
+			$actions[] = '<a href="' . esc_url( $site_url ) . '" target="_blank" title="' . esc_attr__( 'Visit Site', 'grabwp-tenancy' ) . '"><span class="dashicons dashicons-admin-home"></span></a>';
 
 			// Visit Admin button
 			$admin_url = null;
@@ -298,23 +298,23 @@ class GrabWP_Tenancy_List_Table extends WP_List_Table {
 				$admin_url = $item->get_admin_access_url();
 			}
 			if ( $admin_url ) {
-				$actions[] = '<a href="' . esc_url( $admin_url ) . '" target="_blank" class="button">' . esc_html__( 'Visit Admin', 'grabwp-tenancy' ) . '</a>';
+				$actions[] = '<a href="' . esc_url( $admin_url ) . '" target="_blank" title="' . esc_attr__( 'Admin', 'grabwp-tenancy' ) . '"><span class="dashicons dashicons-dashboard"></span></a>';
 			} else {
 				$admin_url = ( is_ssl() ? 'https://' : 'http://' ) . $domains[0] . '/wp-admin/';
-				$actions[] = '<a href="' . esc_url( $admin_url ) . '" target="_blank" class="button">' . esc_html__( 'Visit Admin', 'grabwp-tenancy' ) . '</a>';
+				$actions[] = '<a href="' . esc_url( $admin_url ) . '" target="_blank" title="' . esc_attr__( 'Admin', 'grabwp-tenancy' ) . '"><span class="dashicons dashicons-dashboard"></span></a>';
 			}
 		}
 
 		// Edit button
 		$edit_url = admin_url( 'admin.php?page=grabwp-tenancy-edit&tenant_id=' . urlencode( $item->get_id() ) . '&_wpnonce=' . urlencode( wp_create_nonce( 'grabwp_tenancy_edit' ) ) );
-		$actions[] = '<a href="' . esc_url( $edit_url ) . '" class="button">' . esc_html__( 'Edit', 'grabwp-tenancy' ) . '</a>';
+		$actions[] = '<a href="' . esc_url( $edit_url ) . '" title="' . esc_attr__( 'Settings', 'grabwp-tenancy' ) . '"><span class="dashicons dashicons-edit"></span></a>';
 
 		// Delete button (POST form to avoid destructive GET requests).
 		$delete_form  = '<form method="post" action="' . esc_url( admin_url( 'admin.php?page=grabwp-tenancy' ) ) . '" style="display:inline">';
 		$delete_form .= wp_nonce_field( 'grabwp_tenancy_delete', '_wpnonce', true, false );
 		$delete_form .= '<input type="hidden" name="action" value="delete_tenant" />';
 		$delete_form .= '<input type="hidden" name="tenant_id" value="' . esc_attr( $item->get_id() ) . '" />';
-		$delete_form .= '<button type="submit" class="button button-link-delete" onclick="return grabwpTenancyConfirmDelete(\'' . esc_js( $item->get_id() ) . '\')">' . esc_html__( 'Delete', 'grabwp-tenancy' ) . '</button>';
+		$delete_form .= '<button type="submit" class="button-link button-link-delete" onclick="return grabwpTenancyConfirmDelete(\'' . esc_js( $item->get_id() ) . '\')"><span class="dashicons dashicons-trash"></span></button>';
 		$delete_form .= '</form>';
 		$actions[]    = $delete_form;
 

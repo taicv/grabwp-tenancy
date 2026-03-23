@@ -13,13 +13,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 
 <div class="wrap">
-	<h1><?php esc_html_e( 'Edit Tenant', 'grabwp-tenancy' ); ?></h1>
+	<h1>
+		<?php
+		/* translators: %s: tenant ID */
+		printf( esc_html__( 'Edit Tenant: %s', 'grabwp-tenancy' ), '<code>' . esc_html( $tenant->get_id() ) . '</code>' );
+		?>
+	</h1>
 	<p><?php esc_html_e( 'Edit tenant domain mappings.', 'grabwp-tenancy' ); ?></p>
-
 	<?php
 	// Check for error parameter with nonce verification
-	$error_nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
-	if ( isset( $_GET['error'] ) && wp_verify_nonce( $error_nonce, 'grabwp_tenancy_error' ) ) :
+	$grabwp_tenancy_error_nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+	if ( isset( $_GET['error'] ) && wp_verify_nonce( $grabwp_tenancy_error_nonce, 'grabwp_tenancy_error' ) ) :
 		?>
 		<?php
 		$error_message = get_transient( 'grabwp_tenancy_error' );
@@ -46,12 +50,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<td>
 						<div class="grabwp-edit-domain-inputs">
 							<?php
-							$domains = $tenant->get_domains();
-							if ( ! empty( $domains ) ) :
-								foreach ( $domains as $domain ) :
+							$grabwp_tenancy_domains = $tenant->get_domains();
+							if ( ! empty( $grabwp_tenancy_domains ) ) :
+								foreach ( $grabwp_tenancy_domains as $grabwp_tenancy_domain ) :
 									?>
 									<div class="grabwp-edit-domain-input">
-										<input type="text" name="domains[]" value="<?php echo esc_attr( $domain ); ?>" placeholder="<?php esc_attr_e( 'Enter domain (e.g., tenant1.grabwp.local)', 'grabwp-tenancy' ); ?>" style="width: 300px;" />
+										<input type="text" name="domains[]" value="<?php echo esc_attr( $grabwp_tenancy_domain ); ?>" placeholder="<?php esc_attr_e( 'Enter domain (e.g., tenant1.grabwp.local)', 'grabwp-tenancy' ); ?>" style="width: 300px;" />
 										<button type="button" class="button grabwp-remove-edit-domain" style="margin-left: 10px;"><?php esc_html_e( 'Remove', 'grabwp-tenancy' ); ?></button>
 									</div>
 									<?php

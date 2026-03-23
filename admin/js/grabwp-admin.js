@@ -14,6 +14,8 @@
 		function () {
 			initDomainManagement();
 			initCopyToClipboard();
+			initMuPluginInstall();
+			initLoaderInstall();
 		}
 	);
 
@@ -92,10 +94,23 @@
 	 * Initialize copy to clipboard functionality for admin notices
 	 */
 	function initCopyToClipboard() {
-		var btn = document.getElementById( 'grabwp-copy-btn' );
-		var ta  = document.getElementById( 'grabwp-load-textarea' );
+		// Loader copy button
+		bindCopyButton( 'grabwp-copy-btn', 'grabwp-load-textarea' );
+		// MU-plugin copy button
+		bindCopyButton( 'grabwp-copy-mu-btn', 'grabwp-mu-textarea' );
+	}
 
-		if (btn && ta) {
+	/**
+	 * Bind a copy-to-clipboard button to a hidden textarea
+	 *
+	 * @param {string} btnId    Button element ID
+	 * @param {string} textareaId Textarea element ID
+	 */
+	function bindCopyButton( btnId, textareaId ) {
+		var btn = document.getElementById( btnId );
+		var ta  = document.getElementById( textareaId );
+
+		if ( btn && ta ) {
 			btn.addEventListener(
 				'click',
 				function () {
@@ -103,7 +118,7 @@
 					ta.select();
 					try {
 						var successful = document.execCommand( 'copy' );
-						if (successful) {
+						if ( successful ) {
 							btn.innerText = 'Copied!';
 							setTimeout(
 								function () {
@@ -112,13 +127,109 @@
 								1500
 							);
 						}
-					} catch (e) {
+					} catch ( e ) {
 						// Copy failed, but don't show error to user
 					}
 					ta.style.display = 'none';
 				}
 			);
 		}
+	}
+
+	/**
+	 * Initialize MU-Plugin install button handler
+	 *
+	 * @since 1.2.0
+	 */
+	function initMuPluginInstall() {
+		var btn = document.getElementById( 'grabwp-install-mu-btn' );
+		var status = document.getElementById( 'grabwp-mu-status' );
+
+		if ( ! btn || typeof grabwpTenancyAdmin === 'undefined' ) {
+			return;
+		}
+
+		btn.addEventListener( 'click', function () {
+			btn.disabled = true;
+			btn.textContent = 'Installing…';
+			status.textContent = '';
+
+			var data = new FormData();
+			data.append( 'action', 'grabwp_install_mu_plugin' );
+			data.append( '_ajax_nonce', grabwpTenancyAdmin.muPluginNonce );
+
+			fetch( ajaxurl, { method: 'POST', body: data, credentials: 'same-origin' } )
+				.then( function ( r ) { return r.json(); } )
+				.then( function ( res ) {
+					if ( res.success ) {
+						status.style.color = 'green';
+						status.textContent = '✓ ' + ( res.data || 'MU-Plugin installed successfully.' );
+						var notice = document.getElementById( 'grabwp-mu-plugin-notice' );
+						if ( notice ) {
+							setTimeout( function () { notice.style.display = 'none'; }, 2000 );
+						}
+					} else {
+						status.style.color = 'red';
+						status.textContent = '✗ ' + ( res.data || 'Installation failed.' );
+						btn.disabled = false;
+						btn.textContent = 'Install MU-Plugin';
+					}
+				} )
+				.catch( function () {
+					status.style.color = 'red';
+					status.textContent = '✗ Network error. Please try again.';
+					btn.disabled = false;
+					btn.textContent = 'Install MU-Plugin';
+				} );
+		} );
+	}
+
+	/**
+	 * Initialize wp-config.php loader auto-install button handler
+	 *
+	 * @since 1.2.0
+	 */
+	function initLoaderInstall() {
+		var btn = document.getElementById( 'grabwp-install-loader-btn' );
+		var status = document.getElementById( 'grabwp-loader-status' );
+
+		if ( ! btn || typeof grabwpTenancyAdmin === 'undefined' ) {
+			return;
+		}
+
+		btn.addEventListener( 'click', function () {
+			btn.disabled = true;
+			btn.textContent = 'Installing…';
+			status.textContent = '';
+
+			var data = new FormData();
+			data.append( 'action', 'grabwp_install_loader' );
+			data.append( '_ajax_nonce', grabwpTenancyAdmin.loaderNonce );
+
+			fetch( ajaxurl, { method: 'POST', body: data, credentials: 'same-origin' } )
+				.then( function ( r ) { return r.json(); } )
+				.then( function ( res ) {
+					if ( res.success ) {
+						status.style.color = 'green';
+						status.textContent = '✓ ' + ( res.data || 'Loader installed successfully.' );
+						var notice = document.getElementById( 'grabwp-loader-notice' );
+						if ( notice ) {
+							setTimeout( function () { notice.style.display = 'none'; }, 2000 );
+						}
+					} else {
+						status.style.color = 'red';
+						status.textContent = '✗ ' + ( res.data || 'Installation failed.' );
+						btn.disabled = false;
+						btn.textContent = 'Auto Install to wp-config.php';
+					}
+				} )
+				.catch( function () {
+					status.style.color = 'red';
+					status.textContent = '✗ Network error. Please try again.';
+					btn.disabled = false;
+					btn.textContent = 'Auto Install to wp-config.php';
+				} );
+		} );
 	}
 
 	/**

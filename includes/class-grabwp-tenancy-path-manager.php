@@ -15,6 +15,67 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Fallback definition of grabwp_tenancy_validate_tenant_id()
+ *
+ * This ensures the Path Manager works even when load-helper.php (drop-in)
+ * has not been loaded. If load-helper.php IS loaded first, its version
+ * takes priority and this block is skipped entirely.
+ *
+ * @since 1.0.5
+ */
+if ( ! function_exists( 'grabwp_tenancy_validate_tenant_id' ) ) {
+	/**
+	 * Validate tenant ID format
+	 *
+	 * @param string $tenant_id Tenant identifier
+	 * @return bool True if valid
+	 */
+	function grabwp_tenancy_validate_tenant_id( $tenant_id ) {
+		if ( function_exists( 'grabwp_tenancy_pro_validate_tenant_id' ) ) {
+			return grabwp_tenancy_pro_validate_tenant_id( $tenant_id );
+		}
+
+		if ( empty( $tenant_id ) || ! is_string( $tenant_id ) ) {
+			return false;
+		}
+
+		// Remove null bytes and control characters for security
+		$tenant_id = str_replace( "\0", '', $tenant_id );
+		$tenant_id = preg_replace( '/[\x00-\x1F\x7F]/', '', $tenant_id );
+
+		// Trim whitespace
+		$tenant_id = trim( $tenant_id );
+
+		// Validate format: exactly 6 characters, lowercase alphanumeric
+		if ( ! preg_match( '/^[a-z0-9]{6}$/', $tenant_id ) ) {
+			return false;
+		}
+
+		// Block reserved/problematic tenant IDs for security
+		$reserved_ids = array(
+			'admin1', 'admin2', 'admin3', 'admin4', 'admin5',
+			'root01', 'root02', 'root03', 'root04', 'root05',
+			'test01', 'test02', 'test03', 'test04', 'test05',
+			'guest1', 'guest2', 'guest3', 'guest4', 'guest5',
+			'user01', 'user02', 'user03', 'user04', 'user05',
+			'public', 'privat',
+			'system', 'config', 'backup', 'upload', 'assets',
+			'000000', '111111', '222222', '333333', '444444',
+			'555555', '666666', '777777', '888888', '999999',
+			'aaaaaa', 'bbbbbb', 'cccccc', 'dddddd', 'eeeeee',
+			'ffffff', 'gggggg', 'hhhhhh', 'iiiiii', 'jjjjjj',
+			'123456', '654321', 'abc123', '123abc', 'qwerty',
+		);
+
+		if ( in_array( $tenant_id, $reserved_ids, true ) ) {
+			return false;
+		}
+
+		return true;
+	}
+}
+
+/**
  * Path Manager class
  *
  * Handles all file and directory path resolution with support for:

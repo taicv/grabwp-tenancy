@@ -44,21 +44,22 @@ $grabwp_tenancy_pro_loaded = grabwp_tenancy_load_pro_helper();
  * This is required for early loading tenant config detection
  */
 if ( ! defined( 'GRABWP_TENANCY_BASE_DIR' ) ) {
-	// Use pro version if available
+	// Use pro function if available — single source of truth for all dir resolution.
 	if ( function_exists( 'grabwp_tenancy_pro_define_base_dir' ) ) {
-		$base_dir = grabwp_tenancy_pro_define_base_dir();
-		if ( $base_dir ) {
-			define( 'GRABWP_TENANCY_BASE_DIR', $base_dir['grabwp_base_dir'] );
-			return;
-		}
+		$grabwp_dirs = grabwp_tenancy_pro_define_base_dir();
+		define( 'GRABWP_TENANCY_BASE_DIR', $grabwp_dirs['grabwp_base_dir'] );
+		define( 'GRABWP_TENANCY_DIRS_FROM_PLUGIN', true );
+		return;
 	}
+
+	// Base-only fallback (no pro plugin installed).
 	if ( file_exists( ABSPATH . 'wp-content/grabwp/tenants.php' ) ) {
+		// Legacy path in 1.0.0
 		define( 'GRABWP_TENANCY_BASE_DIR', ABSPATH . 'wp-content/grabwp' );
 	} else {
 		define( 'GRABWP_TENANCY_BASE_DIR', ABSPATH . 'wp-content/uploads/grabwp-tenancy' );
 	}
-
-	
+	define( 'GRABWP_TENANCY_DIRS_FROM_PLUGIN', true );
 }
 
 // =============================================================================

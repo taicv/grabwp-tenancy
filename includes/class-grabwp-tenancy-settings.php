@@ -73,10 +73,10 @@ class GrabWP_Tenancy_Settings {
 	 */
 	public static function get_defaults() {
 		return array(
-			'disallow_file_mods' => false,
-			'disallow_file_edit' => false,
-			'hide_plugin_management'     => false,
-			'hide_theme_management'      => false,
+			'disallow_file_mods' => true,
+			'disallow_file_edit' => true,
+			'hide_plugin_management'     => true,
+			'hide_theme_management'      => true,
 			'hide_grabwp_plugins'        => true,
 		);
 	}

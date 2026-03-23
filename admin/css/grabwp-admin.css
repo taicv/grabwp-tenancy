@@ -105,4 +105,9 @@
 .wp-list-table .column-actions {
     width: auto;
     text-align: right;
-} 
+}
+
+.wp-list-table .column-actions a,
+.wp-list-table .column-actions button {
+    margin-left: 0.3em;
+}

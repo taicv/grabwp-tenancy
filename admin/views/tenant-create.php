@@ -18,8 +18,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	<?php
 	// Check for error parameter with nonce verification
-	$error_nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
-	if ( isset( $_GET['error'] ) && wp_verify_nonce( $error_nonce, 'grabwp_tenancy_error' ) ) :
+	$grabwp_tenancy_error_nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+	if ( isset( $_GET['error'] ) && wp_verify_nonce( $grabwp_tenancy_error_nonce, 'grabwp_tenancy_error' ) ) :
 		?>
 		<?php
 		$error_message = get_transient( 'grabwp_tenancy_error' );

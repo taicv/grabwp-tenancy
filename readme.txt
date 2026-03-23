@@ -4,7 +4,7 @@ Tags: multisite, multi tenancy, multi site, multi domain
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Plugin URI: https://grabwp.com
@@ -33,6 +33,17 @@ GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential
 * **Basic Admin Interface**: Simple tenant management through WordPress admin
 * **Early Initialization**: Plugin loads before WordPress core hooks
 
+= Pro Features =
+
+* **Dedicated Database Per Tenant**: Give every tenant their own MySQL or SQLite database - complete data isolation, zero cross-tenant risk
+* **Full wp-content Separation**: Isolated themes, plugins, and uploads directory per tenant - no shared extensions, no bleed-over
+* **SQLite Per Tenant**: Lightweight SQLite databases for small tenants and dev environments - no extra MySQL instance required
+* **AJAX Backup & Restore**: 7-step backup, 8-step restore with real-time progress UI - runs async so PHP timeouts never kill your backup
+* **Cross-Database Migration**: Restore a tenant to any database type - migrate freely between shared MySQL, dedicated MySQL, and SQLite
+* **Extension Sync & Convert**: Sync plugins and themes with the filesystem state, then switch between symlink and copy installs per tenant
+* **Broken Symlink Auto-Repair**: One-click detection and repair of broken plugin or theme symlinks - keep every tenant's extensions healthy
+* **Custom Tenant Data Location**: Store tenant content outside the webroot or on any server path - configure via wp-config.php constants
+* **Per-Tenant Config Files**: Each tenant gets its own config file; new tenants inherit master defaults - fine-grained control at scale
 
 == Frequently Asked Questions ==
 
@@ -72,6 +83,21 @@ The plugin is designed to be compatible with most WordPress plugins. However, pl
 **📖 Need detailed setup instructions?** Visit our [complete documentation](https://grabwp.com) for step-by-step guides and troubleshooting.
 
 == Changelog ==
+
+= 1.0.6 =
+- New: Dedicated **Status** admin page with system information, file structure, database config, content isolation, and domain routing details (moved out of Settings page)
+- New: One-click **Auto Install MU-Plugin** button with AJAX handler — auto-creates the must-use plugin file, or shows copy-to-clipboard fallback when the directory is not writable
+- New: One-click **Auto Install to wp-config.php** button with AJAX handler — injects the `load.php` require line before the stop-editing marker, or shows copy-to-clipboard fallback when `wp-config.php` is not writable
+- New: Admin notices for missing MU-plugin and missing `wp-config.php` loader, shown only on plugin pages, with writability-aware UI (auto-install vs. manual copy)
+- New: Pro Features section added to the plugin readme
+- Improved: Default tenant capability settings are now **enabled** (Disallow File Mods, Disallow File Edit, Hide Plugin Management, Hide Theme Management) for stronger security out of the box
+- Improved: Added fallback definition of `grabwp_tenancy_validate_tenant_id()` in Path Manager so validation works even when `load-helper.php` is not loaded
+- Improved: Tenant edit page title now displays the tenant ID for clarity
+- Improved: Moved AJAX nonces (`muPluginNonce`, `loaderNonce`) into localized admin script data
+- Improved: Refactored JS — extracted `bindCopyButton()` helper, added `initMuPluginInstall()` and `initLoaderInstall()` handlers in `grabwp-admin.js`
+- Improved: Streamlined `load-helper.php` base-dir resolution logic and added `GRABWP_TENANCY_DIRS_FROM_PLUGIN` constant
+- Improved: Renamed local variables in tenant views to use `grabwp_tenancy_` prefix to avoid potential conflicts
+- Improved: Tested up to WordPress 6.9
 
 = 1.0.5 =
 - New: Settings page for tenant capability controls (Disallow File Mods, Disallow File Edit, Hide Plugin Management, Hide Theme Management, Hide GrabWP Plugins)
