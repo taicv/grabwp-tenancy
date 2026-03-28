@@ -1,6 +1,6 @@
 === GrabWP Tenancy ===
 Contributors: taicv
-Tags: multisite, multi tenancy, multi site, multi domain
+Tags: multisite, multi tenancy, multi site, multi domain, subdirectories
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 7.4
@@ -10,7 +10,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Plugin URI: https://grabwp.com
 Donate link: https://grabwp.com
 
-Multi-tenant WordPress with shared MySQL, domain routing, and isolated uploads.
+Multi-tenant WordPress with shared MySQL, domain and path routing, and isolated uploads.
 
 == Description ==
 
@@ -18,7 +18,7 @@ https://www.youtube.com/watch?v=SAd_QeUZEDw
 
 = WORDPRESS MULTISITE ALTERNATIVE - ENABLE MULTI-TENANT AT NO COST =
 
-GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential isolation features. This base plugin focuses on cost-effective multi-tenancy with shared resources and basic tenant separation.
+GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential isolation features. Host your tenants effortlessly on a single domain using our new **Path-Based Routing** (e.g., example.com/tenant), or map them to full custom domains. It is the perfect, lightweight, drop-in replacement for WordPress Multisite built for simplicity and scale.
 
 **📖 Complete Documentation**: [grabwp.com](https://grabwp.com)  
 **💻 Source Code**: [GitHub Repository](https://github.com/grabwp/grabwp-tenancy)  
@@ -29,7 +29,7 @@ GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential
 * **Shared MySQL Database**: Cost-effective tenant isolation using unique table prefixes
 * **Separated Upload Directories**: Each tenant gets isolated upload directories
 * **Shared Themes & Plugins**: All tenants share the same themes and plugins for simplicity
-* **Domain-based Routing**: Automatic tenant identification based on domain names
+* **Flexible Routing Options**: Choose between domain-based routing or our new **path-based (subdirectory) routing** for an effortless setup without DNS changes.
 * **Basic Admin Interface**: Simple tenant management through WordPress admin
 * **Early Initialization**: Plugin loads before WordPress core hooks
 
@@ -49,7 +49,11 @@ GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential
 
 = Does this plugin work with WordPress multisite? =
 
-No, this plugin provides multi-tenancy functionality without requiring WordPress multisite. It creates tenant isolation through domain-based routing and database prefixes.
+No, this plugin provides multi-tenancy functionality without requiring WordPress multisite. It creates tenant isolation through domain-based or path-based routing and database prefixes.
+
+= Do I need a custom domain for every tenant? =
+
+No! With our new path-based routing feature, you can completely bypass complex domain and DNS configurations. You can host tenants dynamically on subdirectories underneath your main site (e.g., `yoursite.com/client-a`).
 
 = Can I use custom domains for tenants? =
 
