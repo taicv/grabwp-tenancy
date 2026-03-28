@@ -96,7 +96,7 @@
 }
 
 .wp-list-table .column-domains {
-    width: 25%;
+    width: 15%;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
@@ -110,4 +110,31 @@
 .wp-list-table .column-actions a,
 .wp-list-table .column-actions button {
     margin-left: 0.3em;
+}
+
+/* Path URL column */
+.wp-list-table .column-path_url {
+    width: 25%;
+}
+
+.grabwp-path-url {
+    word-break: break-all;
+}
+
+/* Path URL info box on create page */
+.grabwp-path-url-info {
+    background: #f0f6fc;
+    border-left: 4px solid #2271b1;
+    padding: 8px 12px;
+    margin: 10px 0 15px;
+}
+
+.grabwp-path-url-info p {
+    margin: 0;
+}
+
+/* Copy button for path URL */
+.grabwp-copy-path-url {
+    margin-left: 8px !important;
+    vertical-align: middle;
 }

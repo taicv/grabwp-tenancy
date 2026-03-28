@@ -19,18 +19,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 		printf( esc_html__( 'Edit Tenant: %s', 'grabwp-tenancy' ), '<code>' . esc_html( $tenant->get_id() ) . '</code>' );
 		?>
 	</h1>
-	<p><?php esc_html_e( 'Edit tenant domain mappings.', 'grabwp-tenancy' ); ?></p>
+	<p><?php esc_html_e( 'Edit tenant settings and domain mappings.', 'grabwp-tenancy' ); ?></p>
 	<?php
 	// Check for error parameter with nonce verification
 	$grabwp_tenancy_error_nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
 	if ( isset( $_GET['error'] ) && wp_verify_nonce( $grabwp_tenancy_error_nonce, 'grabwp_tenancy_error' ) ) :
 		?>
 		<?php
-		$error_message = get_transient( 'grabwp_tenancy_error' );
-		if ( $error_message ) :
+		$grabwp_tenancy_error_message = get_transient( 'grabwp_tenancy_error' );
+		if ( $grabwp_tenancy_error_message ) :
 			?>
 			<div class="notice notice-error is-dismissible">
-				<p><?php echo esc_html( $error_message ); ?></p>
+				<p><?php echo esc_html( $grabwp_tenancy_error_message ); ?></p>
 			</div>
 		<?php endif; ?>
 	<?php endif; ?>
@@ -44,6 +44,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Tenant ID', 'grabwp-tenancy' ); ?></th>
 					<td><code><?php echo esc_html( $tenant->get_id() ); ?></code></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Path URL', 'grabwp-tenancy' ); ?></th>
+					<td>
+						<?php $grabwp_tenancy_path_url = site_url( '/site/' . $tenant->get_id() . '/' ); ?>
+						<code id="grabwp-path-url-value"><?php echo esc_html( $grabwp_tenancy_path_url ); ?></code>
+						<button type="button" class="button button-small grabwp-copy-path-url" data-copy-value="<?php echo esc_attr( $grabwp_tenancy_path_url ); ?>">
+							<?php esc_html_e( 'Copy', 'grabwp-tenancy' ); ?>
+						</button>
+						<p class="description"><?php esc_html_e( 'This URL is always available, no DNS configuration needed.', 'grabwp-tenancy' ); ?></p>
+					</td>
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Domains', 'grabwp-tenancy' ); ?></th>
@@ -69,9 +80,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<?php endif; ?>
 						</div>
 						<button type="button" class="button grabwp-add-edit-domain" style="margin-top: 10px;">
-							<?php esc_html_e( 'Add Domain', 'grabwp-tenancy' ); ?>
+							<?php esc_html_e( 'Add New Domain', 'grabwp-tenancy' ); ?>
 						</button>
-						<p class="description"><?php esc_html_e( 'Enter at least one domain for this tenant. You can add multiple domains.', 'grabwp-tenancy' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Domain mapping is optional. The path URL above is always available.', 'grabwp-tenancy' ); ?></p>
 						<p class="description"><?php esc_html_e( 'Valid format: example.com, subdomain.example.com (no http:// or www)', 'grabwp-tenancy' ); ?></p>
 					</td>
 				</tr>

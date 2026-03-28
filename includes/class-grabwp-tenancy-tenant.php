@@ -272,7 +272,13 @@ class GrabWP_Tenancy_Tenant {
 		// If hash is provided, validate it (enhanced security)
 		if ( ! empty( $hash ) ) {
 			// Get current domain and tenant ID
-			$current_domain = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+		if ( defined( 'GRABWP_TENANCY_ROUTING_METHOD' ) && ( GRABWP_TENANCY_ROUTING_METHOD === 'path' || GRABWP_TENANCY_ROUTING_METHOD === 'query' ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Token-based auth, not a user-submitted form.
+			$current_domain = isset( $_GET['tenant_domain'] ) ? sanitize_text_field( wp_unslash( $_GET['tenant_domain'] ) ) : '';
+		} else {
+				$current_domain = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+			}
+			
 			$tenant_id      = defined( 'GRABWP_TENANCY_TENANT_ID' ) ? GRABWP_TENANCY_TENANT_ID : '';
 
 			if ( empty( $current_domain ) || empty( $tenant_id ) ) {

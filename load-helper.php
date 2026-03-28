@@ -46,8 +46,8 @@ $grabwp_tenancy_pro_loaded = grabwp_tenancy_load_pro_helper();
 if ( ! defined( 'GRABWP_TENANCY_BASE_DIR' ) ) {
 	// Use pro function if available — single source of truth for all dir resolution.
 	if ( function_exists( 'grabwp_tenancy_pro_define_base_dir' ) ) {
-		$grabwp_dirs = grabwp_tenancy_pro_define_base_dir();
-		define( 'GRABWP_TENANCY_BASE_DIR', $grabwp_dirs['grabwp_base_dir'] );
+		$grabwp_tenancy_dirs = grabwp_tenancy_pro_define_base_dir();
+		define( 'GRABWP_TENANCY_BASE_DIR', $grabwp_tenancy_dirs['grabwp_base_dir'] );
 		define( 'GRABWP_TENANCY_DIRS_FROM_PLUGIN', true );
 		return;
 	}
@@ -65,6 +65,18 @@ if ( ! defined( 'GRABWP_TENANCY_BASE_DIR' ) ) {
 // =============================================================================
 // SECURITY & VALIDATION FUNCTIONS
 // =============================================================================
+
+/**
+ * Strip null bytes and control characters from a string
+ *
+ * @param string $value String to clean
+ * @return string Cleaned string
+ */
+function grabwp_tenancy_strip_control_chars( $value ) {
+	$value = str_replace( "\0", '', $value );
+	$value = preg_replace( '/[\x00-\x1F\x7F]/', '', $value );
+	return $value;
+}
 
 /**
  * Remove slashes from a string or array of strings
@@ -99,8 +111,7 @@ function grabwp_tenancy_wp_strip_all_tags( $string, $allowable_tags = '' ) {
 	$string = (string) $string;
 
 	// Remove null bytes and control characters
-	$string = str_replace( "\0", '', $string );
-	$string = preg_replace( '/[\x00-\x1F\x7F]/', '', $string );
+	$string = grabwp_tenancy_strip_control_chars( $string );
 
 	// Remove HTML tags
 	$string = strip_tags( $string, $allowable_tags );
@@ -121,11 +132,7 @@ function grabwp_tenancy_sanitize_text_field( $str ) {
 
 	$str = (string) $str;
 
-	// Remove null bytes and control characters
-	$str = str_replace( "\0", '', $str );
-	$str = preg_replace( '/[\x00-\x1F\x7F]/', '', $str );
-
-	// Remove HTML tags using our WordPress-compatible function
+	// Remove HTML tags (strip_all_tags already handles control chars)
 	$str = grabwp_tenancy_wp_strip_all_tags( $str );
 
 	// Remove extra whitespace
@@ -148,8 +155,7 @@ function grabwp_tenancy_sanitize_url( $url ) {
 	$url = (string) $url;
 
 	// Remove null bytes and control characters
-	$url = str_replace( "\0", '', $url );
-	$url = preg_replace( '/[\x00-\x1F\x7F]/', '', $url );
+	$url = grabwp_tenancy_strip_control_chars( $url );
 
 	// Basic URL validation
 	if ( filter_var( $url, FILTER_VALIDATE_URL ) ) {
@@ -175,8 +181,7 @@ function grabwp_tenancy_validate_tenant_id( $tenant_id ) {
 	}
 
 	// Remove null bytes and control characters for security
-	$tenant_id = str_replace( "\0", '', $tenant_id );
-	$tenant_id = preg_replace( '/[\x00-\x1F\x7F]/', '', $tenant_id );
+	$tenant_id = grabwp_tenancy_strip_control_chars( $tenant_id );
 
 	// Trim whitespace
 	$tenant_id = trim( $tenant_id );
@@ -269,8 +274,7 @@ function grabwp_tenancy_validate_domain( $domain ) {
 	}
 
 	// Remove null bytes and control characters for security
-	$domain = str_replace( "\0", '', $domain );
-	$domain = preg_replace( '/[\x00-\x1F\x7F]/', '', $domain );
+	$domain = grabwp_tenancy_strip_control_chars( $domain );
 
 	// Trim and convert to lowercase for consistent validation
 	$domain = strtolower( trim( $domain ) );
@@ -352,80 +356,130 @@ function grabwp_tenancy_get_server_info() {
 		// Validate domain format before using
 		if ( grabwp_tenancy_validate_domain( $host ) ) {
 			$server_info['host'] = $host;
+		}else{
+			$server_info['host'] = "localhost";
 		}
 	}
 
-	// Determine protocol
-	if ( isset( $_SERVER['HTTPS'] ) ) {
-		// Sanitize and unslash HTTPS value immediately for WPCS compliance
-        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Early initialization requires direct $_SERVER access, immediately sanitized below
-		$raw_https   = $_SERVER['HTTPS'];
-		$https_value = grabwp_tenancy_sanitize_text_field( grabwp_tenancy_wp_unslash( $raw_https ) );
+	// Determine protocol — check direct HTTPS flag first, then reverse-proxy headers
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Early bootstrap, sanitized immediately below
+	$https_value = isset( $_SERVER['HTTPS'] ) ? grabwp_tenancy_sanitize_text_field( grabwp_tenancy_wp_unslash( $_SERVER['HTTPS'] ) ) : '';
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+	$forwarded_proto = isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) ? grabwp_tenancy_sanitize_text_field( grabwp_tenancy_wp_unslash( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) ) : '';
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+	$forwarded_ssl = isset( $_SERVER['HTTP_X_FORWARDED_SSL'] ) ? grabwp_tenancy_sanitize_text_field( grabwp_tenancy_wp_unslash( $_SERVER['HTTP_X_FORWARDED_SSL'] ) ) : '';
 
-		// Validate HTTPS value and set protocol
-		if ( ! empty( $https_value ) && ( $https_value === 'on' || $https_value === '1' || strtolower( $https_value ) === 'true' ) ) {
-			$server_info['protocol'] = 'https';
-		}
+	if (
+		( ! empty( $https_value ) && in_array( strtolower( $https_value ), array( 'on', '1', 'true' ), true ) ) ||
+		( strtolower( $forwarded_proto ) === 'https' ) ||
+		( strtolower( $forwarded_ssl ) === 'on' )
+	) {
+		$server_info['protocol'] = 'https';
 	}
 
 	return $server_info;
 }
 
 // =============================================================================
+// PATH & DIRECTORY MANAGEMENT — SHARED HELPERS
+// =============================================================================
+// These helpers are extracted so the pro plugin can reuse them without duplication.
+
+/**
+ * Define ABSPATH if not already defined.
+ * Safe to call from both base and pro plugins.
+ */
+function grabwp_tenancy_boot_define_abspath() {
+	if ( ! defined( 'ABSPATH' ) ) {
+		// dirname() required — WordPress functions unavailable at this stage
+		define( 'ABSPATH', dirname( __DIR__, 3 ) . '/' );
+	}
+}
+
+/**
+ * Define WP_SITEURL, WP_HOME, and cookie-path constants based on the active
+ * routing method (domain / path / query).  Idempotent — skips already-defined
+ * constants.
+ *
+ * @param array $server_info Return value of grabwp_tenancy_get_server_info().
+ */
+function grabwp_tenancy_boot_define_routing_constants( $server_info ) {
+	if ( empty( $server_info['host'] ) ) {
+		return;
+	}
+
+	$base_url = $server_info['protocol'] . '://' . $server_info['host'];
+
+	if ( defined( 'GRABWP_TENANCY_ROUTING_METHOD' ) && in_array( GRABWP_TENANCY_ROUTING_METHOD, array( 'path', 'query' ), true ) ) {
+		// Path/query routing: append /site/{tenant_id}
+		$tenant_path = defined( 'GRABWP_TENANCY_TENANT_ID' ) ? '/site/' . GRABWP_TENANCY_TENANT_ID : '';
+		$site_url    = $base_url . $tenant_path;
+
+		if ( ! defined( 'WP_SITEURL' ) ) {
+			define( 'WP_SITEURL', $site_url );
+		}
+		if ( ! defined( 'WP_HOME' ) ) {
+			define( 'WP_HOME', $site_url );
+		}
+
+		// Cookie paths with tenant prefix
+		if ( ! empty( $tenant_path ) ) {
+			if ( ! defined( 'COOKIEPATH' ) ) {
+				define( 'COOKIEPATH', $tenant_path . '/' );
+			}
+			if ( ! defined( 'SITECOOKIEPATH' ) ) {
+				define( 'SITECOOKIEPATH', $tenant_path . '/' );
+			}
+			if ( ! defined( 'ADMIN_COOKIE_PATH' ) ) {
+				define( 'ADMIN_COOKIE_PATH', $tenant_path . '/wp-admin' );
+			}
+		}
+	} else {
+		// Domain routing: the host itself identifies the tenant
+		if ( ! defined( 'WP_SITEURL' ) ) {
+			define( 'WP_SITEURL', $base_url );
+		}
+		if ( ! defined( 'WP_HOME' ) ) {
+			define( 'WP_HOME', $base_url );
+		}
+	}
+}
+
+
+// =============================================================================
 // PATH & DIRECTORY MANAGEMENT
 // =============================================================================
 
-
 /**
- * Define essential WordPress constants for early loading
+ * Define essential WordPress constants for early loading (base plugin).
+ * Orchestrates the shared helpers + base-specific defaults.
  */
 function grabwp_tenancy_boot_define_constants() {
-	// Define ABSPATH if not already defined
-	if ( ! defined( 'ABSPATH' ) ) {
-		// Note: Using dirname() here is necessary for early loading in wp-config.php
-		// WordPress functions like plugin_dir_path() are not available at this stage
-		define( 'ABSPATH', dirname( __DIR__, 3 ) . '/' );
-	}
+	grabwp_tenancy_boot_define_abspath();
 
-	// Define WP_CONTENT_DIR if not already defined
+	// Default content directory
 	if ( ! defined( 'WP_CONTENT_DIR' ) ) {
 		define( 'WP_CONTENT_DIR', ABSPATH . 'wp-content' );
 	}
 
-	// Get server information once
 	$server_info = grabwp_tenancy_get_server_info();
 
-	// Define WP_CONTENT_URL if not already defined
+	// Default content URL
 	if ( ! defined( 'WP_CONTENT_URL' ) && ! empty( $server_info['host'] ) ) {
 		define( 'WP_CONTENT_URL', $server_info['protocol'] . '://' . $server_info['host'] . '/wp-content' );
 	}
 
-	// Define WP_PLUGIN_DIR if not already defined
+	// Default plugin directory
 	if ( ! defined( 'WP_PLUGIN_DIR' ) ) {
 		define( 'WP_PLUGIN_DIR', WP_CONTENT_DIR . '/plugins' );
 	}
 
-
-	// Define WP_SITEURL if not already defined
-	if ( ! defined( 'WP_SITEURL' ) && ! empty( $server_info['host'] ) ) {
-		define( 'WP_SITEURL', $server_info['protocol'] . '://' . $server_info['host'] );
-	}
-
-	// Define WP_HOME if not already defined
-	if ( ! defined( 'WP_HOME' ) && ! empty( $server_info['host'] ) ) {
-		define( 'WP_HOME', $server_info['protocol'] . '://' . $server_info['host'] );
-	}
-
-	// Define security constants if not already defined
-	if ( ! defined( 'DISABLE_FILE_EDIT' ) ) {
-		define( 'DISABLE_FILE_EDIT', true );
-	}
-
-	if ( ! defined( 'DISABLE_FILE_MODS' ) ) {
-		define( 'DISABLE_FILE_MODS', true );
-	}
+	grabwp_tenancy_boot_define_routing_constants( $server_info );
 
 	grabwp_tenancy_set_uploads_paths();
+
+	// Configure database prefix
+	grabwp_tenancy_set_database_prefix();
 }
 
 /**
@@ -460,8 +514,7 @@ function grabwp_tenancy_set_uploads_paths() {
 function grabwp_tenancy_load_tenant_mappings() {
 	// Use pro version if available
 	if ( function_exists( 'grabwp_tenancy_pro_load_tenant_mappings' ) ) {
-		grabwp_tenancy_pro_load_tenant_mappings();
-		return;
+		return grabwp_tenancy_pro_load_tenant_mappings();
 	}
 	// Cache mappings to avoid multiple file reads
 	static $tenant_mappings = null;
@@ -489,10 +542,9 @@ function grabwp_tenancy_load_tenant_mappings() {
  * @param array  $mappings Tenant domain mappings
  * @return string|false Tenant ID or false if not found
  */
-function grabwp_tenancy_identify_tenant( $domain, $mappings ) {
-	if ( function_exists( 'grabwp_tenancy_pro_identify_tenant' ) ) {
-		grabwp_tenancy_pro_identify_tenant( $domain, $mappings );
-		return;
+function grabwp_tenancy_identify_tenant_from_domain( $domain, $mappings ) {
+	if ( function_exists( 'grabwp_tenancy_pro_identify_tenant_from_domain' ) ) {
+		return grabwp_tenancy_pro_identify_tenant_from_domain( $domain, $mappings );
 	}
 	if ( empty( $domain ) || ! is_array( $mappings ) ) {
 		return false;
@@ -503,6 +555,9 @@ function grabwp_tenancy_identify_tenant( $domain, $mappings ) {
 			foreach ( $domains as $domain_entry ) {
 				if ( $domain === $domain_entry ) {
 					define( 'GRABWP_TENANCY_TENANT_ID', $tenant_id );
+					if ( ! defined( 'GRABWP_TENANCY_ROUTING_METHOD' ) ) {
+						define( 'GRABWP_TENANCY_ROUTING_METHOD', 'domain' );
+					}
 					return $tenant_id;
 				}
 			}
@@ -563,11 +618,90 @@ function grabwp_tenancy_set_database_prefix() {
 	}
 }
 
+
+
 /**
- * Configure tenant-specific settings
+ * Identify tenant from URL path (/site/[tenant-id])
+ *
+ * Parses REQUEST_URI for the /site/[tenant-id] pattern.
+ * Strips the prefix from REQUEST_URI so WordPress routes the remaining path normally.
+ *
+ * @return string|false Tenant ID or false if not found
  */
-function grabwp_tenancy_boot_configure_tenant() {
-	grabwp_tenancy_set_database_prefix();
+function grabwp_tenancy_identify_tenant_from_path() {
+	if ( function_exists( 'grabwp_tenancy_pro_identify_tenant_from_path' ) ) {
+		return grabwp_tenancy_pro_identify_tenant_from_path();
+	}
+
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Early bootstrap, sanitized immediately below
+	$raw_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '';
+	$uri     = grabwp_tenancy_sanitize_text_field( grabwp_tenancy_wp_unslash( $raw_uri ) );
+
+	// Match /site/{6-char alphanumeric} at the start of the path
+	if ( ! preg_match( '#^/site/([a-z0-9]{6})(/|$)#', $uri, $matches ) ) {
+		return false;
+	}
+
+	$tenant_id = $matches[1];
+
+	// Verify tenant exists in tenant mappings
+	$tenant_mappings = grabwp_tenancy_load_tenant_mappings();
+	if ( ! isset( $tenant_mappings[ $tenant_id ] ) ) {
+		return false;
+	}
+
+	if ( ! defined( 'GRABWP_TENANCY_TENANT_ID' ) ) {
+		define( 'GRABWP_TENANCY_TENANT_ID', $tenant_id );
+	}
+
+	// Do NOT strip /site/{tenant_id} from REQUEST_URI here.
+	// The .htaccess rules handle Apache-level rewriting.
+	// Keeping the original REQUEST_URI preserves the tenant prefix in
+	// auth_redirect()'s redirect_to parameter, so the browser stays in
+	// tenant context through the login flow.
+
+	if ( ! defined( 'GRABWP_TENANCY_ROUTING_METHOD' ) ) {
+		define( 'GRABWP_TENANCY_ROUTING_METHOD', 'path' );
+	}
+
+	return $tenant_id;
+}
+
+/**
+ * Identify tenant from query string (?site=[tenant-id])
+ *
+ * Fallback for servers without mod_rewrite enabled.
+ *
+ * @return string|false Tenant ID or false if not found
+ */
+function grabwp_tenancy_identify_tenant_from_query() {
+	if ( function_exists( 'grabwp_tenancy_pro_identify_tenant_from_query' ) ) {
+		return grabwp_tenancy_pro_identify_tenant_from_query();
+	}
+
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Early bootstrap, sanitized immediately below
+	$raw_site  = isset( $_GET['site'] ) ? $_GET['site'] : '';
+	$tenant_id = grabwp_tenancy_sanitize_text_field( grabwp_tenancy_wp_unslash( $raw_site ) );
+
+	if ( empty( $tenant_id ) ) {
+		return false;
+	}
+
+	// Verify tenant exists in tenant mappings
+	$tenant_mappings = grabwp_tenancy_load_tenant_mappings();
+	if ( ! isset( $tenant_mappings[ $tenant_id ] ) ) {
+		return false;
+	}
+
+	if ( ! defined( 'GRABWP_TENANCY_TENANT_ID' ) ) {
+		define( 'GRABWP_TENANCY_TENANT_ID', $tenant_id );
+	}
+
+	if ( ! defined( 'GRABWP_TENANCY_ROUTING_METHOD' ) ) {
+		define( 'GRABWP_TENANCY_ROUTING_METHOD', 'query' );
+	}
+
+	return $tenant_id;
 }
 
 // =============================================================================
@@ -608,8 +742,7 @@ function grabwp_tenancy_configure_cli_environment() {
  */
 function grabwp_tenancy_get_cli_domain( $tenant_id, $tenant_mappings ) {
 	if ( function_exists( 'grabwp_tenancy_pro_get_cli_domain' ) ) {
-		grabwp_tenancy_pro_get_cli_domain( $tenant_id, $tenant_mappings );
-		return;
+		return grabwp_tenancy_pro_get_cli_domain( $tenant_id, $tenant_mappings );
 	}
 	// Get current domain from mappings for CLI
 	if ( isset( $tenant_mappings[ $tenant_id ] ) && ! empty( $tenant_mappings[ $tenant_id ][0] ) ) {
@@ -621,7 +754,12 @@ function grabwp_tenancy_get_cli_domain( $tenant_id, $tenant_mappings ) {
 
 
 /**
- * Detect tenant from CLI or domain
+ * Detect tenant from CLI, domain mapping, URL path, or query string.
+ * Priority: CLI → domain mapping → URL path (/site/id) → query string (?site=id)
+ *
+ * Domain mapping runs before path/query so that a request like
+ * tenantdomain.example/site/otherid correctly resolves to the domain-mapped tenant,
+ * not the path-based one.
  */
 function grabwp_tenancy_boot_detect_tenant() {
 	// CLI: Check for pre-defined tenant ID
@@ -630,19 +768,33 @@ function grabwp_tenancy_boot_detect_tenant() {
 		return GRABWP_TENANCY_TENANT_ID;
 	}
 
-	// Cron: Handle cron requests with tenant context
+	// Cron: use main site context for now
 	if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
-		// For cron, we need to determine which tenant context to use
-		// This could be based on a default tenant or the main site
-		// For now, return false to use main site context
 		return false;
 	}
 
-	// Web: Get domain and find tenant
+	// Domain mapping (highest web priority — authoritative signal)
 	$server_info     = grabwp_tenancy_get_server_info();
 	$tenant_mappings = grabwp_tenancy_load_tenant_mappings();
+	$tenant_id       = grabwp_tenancy_identify_tenant_from_domain( $server_info['host'], $tenant_mappings );
 
-	return grabwp_tenancy_identify_tenant( $server_info['host'], $tenant_mappings );
+	if ( $tenant_id ) {
+		return $tenant_id;
+	}
+
+	// URL path fallback: /site/[tenant-id] (shared domain only)
+	$tenant_id = grabwp_tenancy_identify_tenant_from_path();
+	if ( $tenant_id ) {
+		return $tenant_id;
+	}
+
+	// Query string fallback: ?site=[tenant-id] (no mod_rewrite)
+	$tenant_id = grabwp_tenancy_identify_tenant_from_query();
+	if ( $tenant_id ) {
+		return $tenant_id;
+	}
+
+	return false;
 }
 
 
@@ -663,13 +815,9 @@ function grabwp_tenancy_early_init() {
 	if ( ! $tenant_id || ! grabwp_tenancy_validate_tenant_id( $tenant_id ) ) {
 		return;
 	}
-
 	// Set tenant context (Is Tenant)
 	grabwp_tenancy_boot_set_tenant_context();
 
-	// Define constants (Directories, URLs, Home Constants, Security Constants)
+	// Define constants (Directories, URLs, Home Constants, Security Constants) and configure DB
 	grabwp_tenancy_boot_define_constants();
-
-	// Configure tenant (Database)
-	grabwp_tenancy_boot_configure_tenant();
 }

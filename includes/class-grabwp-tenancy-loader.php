@@ -44,12 +44,89 @@ class GrabWP_Tenancy_Loader {
 		// Admin access token handling - early priority for tenant sites
 		if ( $this->plugin->is_tenant() ) {
 			add_action( 'init', array( $this, 'handle_admin_token' ), 5 );
+
+			// Fixes for path routing where REQUEST_URI is stripped of /site/{tenant_id}
+			if ( defined( 'GRABWP_TENANCY_ROUTING_METHOD' ) && 'path' === GRABWP_TENANCY_ROUTING_METHOD ) {
+				add_filter( 'wp_admin_canonical_url', array( $this, 'fix_tenant_admin_canonical_url' ) );
+
+				// redirect_canonical() compares WP_HOME (http://localhost/site/{id}) against the
+				// stripped REQUEST_URI (which has /site/{id} removed) and always finds a mismatch,
+				// causing an infinite 301 loop. Disable it entirely for path-routing tenants.
+				add_filter( 'redirect_canonical', '__return_false' );
+
+				// Fix redirects that use the stripped REQUEST_URI (e.g. _wp_http_referer,
+				// wp_get_referer, admin form redirects) — prepend tenant path prefix.
+				add_filter( 'wp_redirect', array( $this, 'fix_tenant_admin_redirect' ), 10, 1 );
+			}
 		}
 		// Allow pro plugin to extend
 		do_action( 'grabwp_tenancy_loader_init', $this );
 	}
 
+	/**
+	 * Fix the admin canonical URL for path-based tenant routing.
+	 *
+	 * WordPress derives the canonical URL from WP_SITEURL (which is the main site URL,
+	 * e.g. http://localhost/wp-admin/), but tenant pages are served under
+	 * /site/{tenant_id}/wp-admin/. This filter replaces the base with the tenant path.
+	 *
+	 * @param string $url The canonical URL.
+	 * @return string Corrected canonical URL.
+	 */
+	public function fix_tenant_admin_canonical_url( $url ) {
+		if ( ! defined( 'GRABWP_TENANCY_TENANT_ID' ) ) {
+			return $url;
+		}
 
+		$server_info  = grabwp_tenancy_get_server_info();
+		$base         = $server_info['protocol'] . '://' . $server_info['host'];
+		$tenant_base  = $base . '/site/' . GRABWP_TENANCY_TENANT_ID;
+
+		// Replace the origin + /wp-admin prefix with the tenant-prefixed equivalent
+		if ( strpos( $url, $base . '/wp-admin' ) === 0 ) {
+			$url = $tenant_base . substr( $url, strlen( $base ) );
+		}
+
+		return $url;
+	}
+
+	/**
+	 * Fix admin redirects for path-based tenant routing.
+	 *
+	 * Because REQUEST_URI is stripped of /site/{tenant_id}, any WordPress redirect
+	 * built from it (e.g. _wp_http_referer, wp_get_referer) will lack the tenant
+	 * prefix and land on the main site — causing auth failure and reauth loop.
+	 *
+	 * @param string $location Redirect URL.
+	 * @return string Corrected redirect URL with tenant path prefix.
+	 */
+	public function fix_tenant_admin_redirect( $location ) {
+		if ( ! defined( 'GRABWP_TENANCY_TENANT_ID' ) ) {
+			return $location;
+		}
+
+		$tenant_prefix = '/site/' . GRABWP_TENANCY_TENANT_ID;
+
+		// Only fix relative URLs or same-host absolute URLs that target wp-admin/wp-login
+		// and don't already have the tenant prefix
+		if ( strpos( $location, $tenant_prefix ) !== false ) {
+			return $location;
+		}
+
+		// Relative URL starting with /wp-admin or /wp-login.php
+		if ( preg_match( '#^/(wp-admin|wp-login\.php)#', $location ) ) {
+			return $tenant_prefix . $location;
+		}
+
+		// Absolute URL on the same host
+		$server_info = grabwp_tenancy_get_server_info();
+		$base        = $server_info['protocol'] . '://' . $server_info['host'];
+		if ( strpos( $location, $base . '/wp-admin' ) === 0 || strpos( $location, $base . '/wp-login.php' ) === 0 ) {
+			return $base . $tenant_prefix . substr( $location, strlen( $base ) );
+		}
+
+		return $location;
+	}
 
 	/**
 	 * Create tenant directories
@@ -115,9 +192,9 @@ class GrabWP_Tenancy_Loader {
 
 		$success = true;
 		foreach ( $tables as $table ) {
-			$table_name = $table[0];
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching -- Required for tenant table cleanup, table name cannot be prepared, no caching needed for administrative operation
-			$result = $wpdb->query( "DROP TABLE IF EXISTS `{$table_name}`" );
+			$table_name = preg_replace( '/[^a-zA-Z0-9_]/', '', $table[0] );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching -- Required for tenant table cleanup, no caching needed for administrative operation
+			$result = $wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table_name ) );
 			
 			if ( false === $result ) {
 				$success = false;
@@ -207,8 +284,24 @@ class GrabWP_Tenancy_Loader {
 
 		GrabWP_Tenancy_Logger::log( GRABWP_TENANCY_TENANT_ID.' - Admin user logged in: ' . $admin_user->user_login );
 
-		// Redirect to wp-admin to remove token from URL
-		wp_redirect( admin_url() );
+		// Redirect to wp-admin to remove token from URL.
+		// For path routing, admin_url() returns the base domain URL (e.g. http://localhost/wp-admin/)
+		// which misses the tenant path prefix and loads the main site instead of the tenant.
+		// We must manually construct the tenant admin URL with /site/{tenant_id}/ prefix.
+		if ( defined( 'GRABWP_TENANCY_ROUTING_METHOD' ) && 'path' === GRABWP_TENANCY_ROUTING_METHOD ) {
+			$server_info  = grabwp_tenancy_get_server_info();
+			$redirect_url = $server_info['protocol'] . '://' . $server_info['host'] . '/site/' . GRABWP_TENANCY_TENANT_ID . '/wp-admin/';
+			add_filter(
+				'allowed_redirect_hosts',
+				function ( $hosts ) use ( $server_info ) {
+					$hosts[] = $server_info['host'];
+					return $hosts;
+				}
+			);
+		} else {
+			$redirect_url = admin_url();
+		}
+		wp_redirect( $redirect_url );
 		exit;
 	}
 

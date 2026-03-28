@@ -4,7 +4,7 @@ Tags: multisite, multi tenancy, multi site, multi domain
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.0.6
+Stable tag: 1.0.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Plugin URI: https://grabwp.com
@@ -83,6 +83,15 @@ The plugin is designed to be compatible with most WordPress plugins. However, pl
 **📖 Need detailed setup instructions?** Visit our [complete documentation](https://grabwp.com) for step-by-step guides and troubleshooting.
 
 == Changelog ==
+
+= 1.0.7 =
+- Major: Introducing **Path-Based Routing**! You can now host tenants on subdirectories/paths (e.g., `example.com/tenant1`) without requiring separate domains. This completely eliminates the need for complex domain mappings and serves as a true, lightweight replacement for WordPress Multisite.
+- Enhance: Added comprehensive `.htaccess` diagnostic admin notices specifically tailored for path-based routing support.
+- Enhance: Centralized configuration and diagnostic tools into a transparent, read-only Status Page UI with manual fallback instructions for environment issues.
+- Refactor: Streamlined the installation, uninstallation, and environment-fixing processes into a single `GrabWP_Tenancy_Installer` class.
+- Security: Improved code compliance by integrating complete nonce verification on sensitive administrative handlers and securely transitioning to `wp_is_writable()`.
+- Fix: Resolved PHP fatal errors (e.g., `Class Not Found`) relating to the class autoloader sequence during the initial activation process.
+- Quality: Standardized codebase formatting for consistent line endings (CRLF to LF) and file encoding across all files.
 
 = 1.0.6 =
 - New: Dedicated **Status** admin page with system information, file structure, database config, content isolation, and domain routing details (moved out of Settings page)

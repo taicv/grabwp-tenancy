@@ -3,7 +3,7 @@
  * Plugin Name: GrabWP Tenancy
  * Plugin URI: https://grabwp.com/tenancy
  * Description: Foundation multi-tenant WordPress solution with shared MySQL database and separated uploads. Designed to be extended by GrabWP Tenancy Pro for advanced features.
- * Version: 1.0.6
+ * Version: 1.0.7
  * Author: GrabWP
  * Author URI: https://grabwp.com
  * License: GPLv2 or later
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants
-define( 'GRABWP_TENANCY_VERSION', '1.0.6' );
+define( 'GRABWP_TENANCY_VERSION', '1.0.7' );
 define( 'GRABWP_TENANCY_PLUGIN_FILE', __FILE__ );
 define( 'GRABWP_TENANCY_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GRABWP_TENANCY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -256,8 +256,39 @@ final class GrabWP_Tenancy {
 		$this->init_admin();
 		GrabWP_Tenancy_Admin_Notice::register();
 
+		// Register /site/[tenant-id] URL path routing
+		add_action( 'init', array( $this, 'register_site_rewrite_rules' ) );
+		add_filter( 'query_vars', array( $this, 'register_site_query_vars' ) );
+
 		// Allow pro plugin to extend main site functionality
 		do_action( 'grabwp_tenancy_init_main_site_full', $this );
+	}
+
+	/**
+	 * Register rewrite rule for /site/[tenant-id] path routing.
+	 * WordPress writes this to .htaccess automatically on flush_rewrite_rules().
+	 * Fallback: use ?site=[tenant-id] when mod_rewrite is unavailable.
+	 *
+	 * @since 1.1.0
+	 */
+	public function register_site_rewrite_rules() {
+		add_rewrite_rule(
+			'^site/([a-z0-9]{6})(/.*)?$',
+			'index.php?site=$matches[1]',
+			'top'
+		);
+	}
+
+	/**
+	 * Register 'site' as a recognized WordPress query variable.
+	 *
+	 * @param array $vars Existing query vars.
+	 * @return array
+	 * @since 1.1.0
+	 */
+	public function register_site_query_vars( $vars ) {
+		$vars[] = 'site';
+		return $vars;
 	}
 
 	/**
@@ -378,15 +409,11 @@ final class GrabWP_Tenancy {
 	 * @since 1.0.0
 	 */
 	public function activate() {
-		// Run installer activation logic first
 		if ( class_exists( 'GrabWP_Tenancy_Installer' ) ) {
 			GrabWP_Tenancy_Installer::activate();
 		}
 
-		// Flush rewrite rules
 		flush_rewrite_rules();
-
-		// Allow pro plugin to extend activation
 		do_action( 'grabwp_tenancy_activate' );
 	}
 
@@ -396,10 +423,11 @@ final class GrabWP_Tenancy {
 	 * @since 1.0.0
 	 */
 	public function deactivate() {
-		// Flush rewrite rules
-		flush_rewrite_rules();
+		if ( class_exists( 'GrabWP_Tenancy_Installer' ) ) {
+			GrabWP_Tenancy_Installer::deactivate();
+		}
 
-		// Allow pro plugin to extend deactivation
+		flush_rewrite_rules();
 		do_action( 'grabwp_tenancy_deactivate' );
 	}
 

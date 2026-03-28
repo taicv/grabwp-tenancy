@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 <div class="wrap">
 	<h1><?php esc_html_e( 'Add New Tenant', 'grabwp-tenancy' ); ?></h1>
-	<p><?php esc_html_e( 'Create a new tenant with domain mappings.', 'grabwp-tenancy' ); ?></p>
+	<p><?php esc_html_e( 'Create a new tenant. A path-based URL will be assigned automatically.', 'grabwp-tenancy' ); ?></p>
 
 	<?php
 	// Check for error parameter with nonce verification
@@ -22,11 +22,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	if ( isset( $_GET['error'] ) && wp_verify_nonce( $grabwp_tenancy_error_nonce, 'grabwp_tenancy_error' ) ) :
 		?>
 		<?php
-		$error_message = get_transient( 'grabwp_tenancy_error' );
-		if ( $error_message ) :
+		$grabwp_tenancy_error_message = get_transient( 'grabwp_tenancy_error' );
+		if ( $grabwp_tenancy_error_message ) :
 			?>
 			<div class="notice notice-error is-dismissible">
-				<p><?php echo esc_html( $error_message ); ?></p>
+				<p><?php echo esc_html( $grabwp_tenancy_error_message ); ?></p>
 			</div>
 		<?php endif; ?>
 	<?php endif; ?>
@@ -37,19 +37,41 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<input type="hidden" name="action" value="create_tenant" />
 			<table class="form-table">
 				<tr>
-					<th scope="row"><?php esc_html_e( 'Domains', 'grabwp-tenancy' ); ?></th>
+					<th scope="row"><?php esc_html_e( 'Domain Setup', 'grabwp-tenancy' ); ?></th>
 					<td>
-						<div class="grabwp-domain-inputs">
-							<div class="grabwp-domain-input">
-								<input type="text" name="domains[]" placeholder="<?php esc_attr_e( 'Enter domain (e.g., tenant1.grabwp.local)', 'grabwp-tenancy' ); ?>" style="width: 300px;" required />
-								<button type="button" class="button grabwp-remove-domain" style="margin-left: 10px;"><?php esc_html_e( 'Remove', 'grabwp-tenancy' ); ?></button>
+						<fieldset>
+							<label style="display: block; margin-bottom: 8px;">
+								<input type="radio" name="domain_option" value="has_domain" checked />
+								<?php esc_html_e( 'I have a domain', 'grabwp-tenancy' ); ?>
+							</label>
+							<label style="display: block; margin-bottom: 8px;">
+								<input type="radio" name="domain_option" value="map_later" />
+								<?php esc_html_e( "I'll set up a domain later", 'grabwp-tenancy' ); ?>
+							</label>
+						</fieldset>
+
+						<!-- Domain input section (shown when "I have a domain" selected) -->
+						<div id="grabwp-domain-section" style="margin-top: 10px;">
+							<div class="grabwp-domain-inputs">
+								<div class="grabwp-domain-input">
+									<input type="text" name="domains[]" placeholder="<?php esc_attr_e( 'Enter domain (e.g. mysite.com)', 'grabwp-tenancy' ); ?>" style="width: 300px;" />
+									<button type="button" class="button grabwp-remove-domain" style="margin-left: 10px;"><?php esc_html_e( 'Remove', 'grabwp-tenancy' ); ?></button>
+								</div>
 							</div>
+							<button type="button" class="button grabwp-add-domain" style="margin-top: 10px;">
+								<?php esc_html_e( 'Add New Domain', 'grabwp-tenancy' ); ?>
+							</button>
+							<p class="description"><?php esc_html_e( 'Enter without http:// or www (e.g. mysite.com, blog.mysite.com)', 'grabwp-tenancy' ); ?></p>
 						</div>
-						<button type="button" class="button grabwp-add-domain" style="margin-top: 10px;">
-							<?php esc_html_e( 'Add Domain', 'grabwp-tenancy' ); ?>
-						</button>
-						<p class="description"><?php esc_html_e( 'Enter at least one domain for this tenant. You can add multiple domains.', 'grabwp-tenancy' ); ?></p>
-						<p class="description"><?php esc_html_e( 'Valid format: example.com, subdomain.example.com (no http:// or www)', 'grabwp-tenancy' ); ?></p>
+
+						<!-- Path-only info (shown when "I'll set up a domain later" selected) -->
+						<div id="grabwp-no-domain-section" class="grabwp-path-url-info" style="margin-top: 10px; display: none;">
+							<p>
+								<strong><?php esc_html_e( 'Your site will be accessible at:', 'grabwp-tenancy' ); ?></strong><br />
+								<code><?php echo esc_html( site_url( '/site/{tenant-id}/' ) ); ?></code>
+							</p>
+							<p class="description"><?php esc_html_e( 'You can add a domain anytime from the tenant edit page.', 'grabwp-tenancy' ); ?></p>
+						</div>
 					</td>
 				</tr>
 				<?php

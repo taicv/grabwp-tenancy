@@ -338,6 +338,7 @@ class GrabWP_Tenancy_Admin {
 				'incorrectIdMessage'     => __( 'Incorrect tenant ID. Deletion cancelled.', 'grabwp-tenancy' ),
 				'muPluginNonce'          => wp_create_nonce( 'grabwp_install_mu_plugin' ),
 				'loaderNonce'            => wp_create_nonce( 'grabwp_install_loader' ),
+				'fixComponentNonce'      => wp_create_nonce( 'grabwp_fix_component' ),
 			)
 		);
 	}
@@ -561,11 +562,9 @@ class GrabWP_Tenancy_Admin {
 			);
 		}
 
+		// Auto-fill nodomain.local when no domain provided (path-only tenant)
 		if ( empty( $domains ) ) {
-			return array(
-				'message' => __( 'Please enter at least one domain.', 'grabwp-tenancy' ),
-				'type'    => 'error',
-			);
+			$domains = array( 'nodomain.local' );
 		}
 
 		// Validate and sanitize domains
@@ -603,24 +602,35 @@ class GrabWP_Tenancy_Admin {
 			);
 		}
 
-		if ( empty( $validated_domains ) ) {
+		// If no real domains validated but nodomain.local was auto-filled, use it directly
+		if ( empty( $validated_domains ) && in_array( 'nodomain.local', $domains, true ) ) {
+			$validated_domains = array( 'nodomain.local' );
+		} elseif ( empty( $validated_domains ) ) {
 			return array(
 				'message' => __( 'Please enter at least one valid domain.', 'grabwp-tenancy' ),
 				'type'    => 'error',
 			);
 		}
 
-		// Check for duplicate domains
-		$duplicate_check = $this->check_domain_uniqueness( $validated_domains );
-		if ( ! $duplicate_check['unique'] ) {
-			return array(
-				'message' => sprintf(
-					/* translators: %s: comma-separated list of duplicate domain names */
-					__( 'Domain(s) already in use: %s. Each domain can only be assigned to one tenant.', 'grabwp-tenancy' ),
-					implode( ', ', $duplicate_check['duplicates'] )
-				),
-				'type'    => 'error',
-			);
+		// Check for duplicate domains (skip nodomain.local placeholder)
+		$real_domains_to_check = array_filter(
+			$validated_domains,
+			function ( $d ) {
+				return 'nodomain.local' !== $d;
+			}
+		);
+		if ( ! empty( $real_domains_to_check ) ) {
+			$duplicate_check = $this->check_domain_uniqueness( $real_domains_to_check );
+			if ( ! $duplicate_check['unique'] ) {
+				return array(
+					'message' => sprintf(
+						/* translators: %s: comma-separated list of duplicate domain names */
+						__( 'Domain(s) already in use: %s. Each domain can only be assigned to one tenant.', 'grabwp-tenancy' ),
+						implode( ', ', $duplicate_check['duplicates'] )
+					),
+					'type'    => 'error',
+				);
+			}
 		}
 
 		$tenant_id = GrabWP_Tenancy_Tenant::generate_id();
@@ -780,11 +790,9 @@ class GrabWP_Tenancy_Admin {
 			);
 		}
 
+		// Auto-fill nodomain.local when no domain provided (path-only tenant)
 		if ( empty( $domains ) ) {
-			return array(
-				'message' => __( 'Please enter at least one domain.', 'grabwp-tenancy' ),
-				'type'    => 'error',
-			);
+			$domains = array( 'nodomain.local' );
 		}
 
 		// Validate and sanitize domains
@@ -822,24 +830,35 @@ class GrabWP_Tenancy_Admin {
 			);
 		}
 
-		if ( empty( $validated_domains ) ) {
+		// If no real domains validated but nodomain.local was auto-filled, use it directly
+		if ( empty( $validated_domains ) && in_array( 'nodomain.local', $domains, true ) ) {
+			$validated_domains = array( 'nodomain.local' );
+		} elseif ( empty( $validated_domains ) ) {
 			return array(
 				'message' => __( 'Please enter at least one valid domain.', 'grabwp-tenancy' ),
 				'type'    => 'error',
 			);
 		}
 
-		// Check for duplicate domains (excluding current tenant)
-		$duplicate_check = $this->check_domain_uniqueness( $validated_domains, $tenant_id );
-		if ( ! $duplicate_check['unique'] ) {
-			return array(
-				'message' => sprintf(
-					/* translators: %s: comma-separated list of domain names already in use by other tenants */
-					__( 'Domain(s) already in use by other tenants: %s. Each domain can only be assigned to one tenant.', 'grabwp-tenancy' ),
-					implode( ', ', $duplicate_check['duplicates'] )
-				),
-				'type'    => 'error',
-			);
+		// Check for duplicate domains (skip nodomain.local placeholder, exclude current tenant)
+		$real_domains_to_check = array_filter(
+			$validated_domains,
+			function ( $d ) {
+				return 'nodomain.local' !== $d;
+			}
+		);
+		if ( ! empty( $real_domains_to_check ) ) {
+			$duplicate_check = $this->check_domain_uniqueness( $real_domains_to_check, $tenant_id );
+			if ( ! $duplicate_check['unique'] ) {
+				return array(
+					'message' => sprintf(
+						/* translators: %s: comma-separated list of domain names already in use by other tenants */
+						__( 'Domain(s) already in use by other tenants: %s. Each domain can only be assigned to one tenant.', 'grabwp-tenancy' ),
+						implode( ', ', $duplicate_check['duplicates'] )
+					),
+					'type'    => 'error',
+				);
+			}
 		}
 
 		// Load existing mappings
@@ -1007,10 +1026,10 @@ class GrabWP_Tenancy_Admin {
 			}
 
 			// Handle error messages via transients
-			$error_message = get_transient( 'grabwp_tenancy_error' );
-			if ( $error_message ) {
+			$grabwp_tenancy_error_message = get_transient( 'grabwp_tenancy_error' );
+			if ( $grabwp_tenancy_error_message ) {
 				$class = 'notice notice-error is-dismissible';
-				printf( '<div class="%1$s"><p>%2$s</p></div>', esc_attr( $class ), esc_html( $error_message ) );
+				printf( '<div class="%1$s"><p>%2$s</p></div>', esc_attr( $class ), esc_html( $grabwp_tenancy_error_message ) );
 				delete_transient( 'grabwp_tenancy_error' );
 			}
 		}
