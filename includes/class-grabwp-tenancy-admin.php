@@ -633,7 +633,29 @@ class GrabWP_Tenancy_Admin {
 			}
 		}
 
-		$tenant_id = GrabWP_Tenancy_Tenant::generate_id();
+		// Load existing mappings
+		$mappings_file   = $this->get_mappings_file_path();
+		$tenant_mappings = array();
+
+		if ( file_exists( $mappings_file ) ) {
+			include $mappings_file;
+		}
+
+		// Generate a unique tenant ID
+		$tenant_id    = GrabWP_Tenancy_Tenant::generate_id();
+		$max_attempts = 10;
+		$attempts     = 0;
+		while ( isset( $tenant_mappings[ $tenant_id ] ) && $attempts < $max_attempts ) {
+			$tenant_id = GrabWP_Tenancy_Tenant::generate_id();
+			++$attempts;
+		}
+
+		if ( isset( $tenant_mappings[ $tenant_id ] ) ) {
+			return array(
+				'message' => __( 'Failed to generate a unique tenant ID. Please try again.', 'grabwp-tenancy' ),
+				'type'    => 'error',
+			);
+		}
 
 		/**
 		 * Before creating a tenant
@@ -643,14 +665,6 @@ class GrabWP_Tenancy_Admin {
 		 * @param array  $validated_domains Array of validated domains
 		 */
 		do_action( 'grabwp_tenancy_before_create_tenant', $tenant_id, $validated_domains );
-
-		// Load existing mappings
-		$mappings_file   = $this->get_mappings_file_path();
-		$tenant_mappings = array();
-
-		if ( file_exists( $mappings_file ) ) {
-			include $mappings_file;
-		}
 
 		// Add new tenant
 		$tenant_mappings[ $tenant_id ] = $validated_domains;

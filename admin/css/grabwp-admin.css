@@ -96,7 +96,8 @@
 }
 
 .wp-list-table .column-domains {
-    width: 15%;
+    width: auto;
+    min-width: 15%;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;

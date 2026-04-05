@@ -321,6 +321,33 @@ function grabwp_tenancy_validate_domain( $domain ) {
 	return true;
 }
 
+/**
+ * Restrict host to letters, digits, dots, and ASCII hyphens (local network / mDNS-style names).
+ *
+ * @param string $host Host string (e.g. sanitized HTTP_HOST).
+ * @return string Sanitized host, or empty string if nothing usable remains.
+ */
+function grabwp_tenancy_sanitize_local_network_host( $host ) {
+	if ( empty( $host ) || ! is_string( $host ) ) {
+		return '';
+	}
+
+	$host = grabwp_tenancy_strip_control_chars( $host );
+	// Alphanumeric, dot (labels), hyphen — no other characters.
+	$host = preg_replace( '/[^a-zA-Z0-9.\-]/', '', $host );
+	$host = strtolower( trim( $host, ".-\t\n\r\0\x0B" ) );
+
+	if ( '' === $host || strlen( $host ) > 253 ) {
+		return '';
+	}
+
+	if ( ! preg_match( '/[a-z0-9]/', $host ) ) {
+		return '';
+	}
+
+	return $host;
+}
+
 // =============================================================================
 // SERVER & ENVIRONMENT DETECTION
 // =============================================================================
@@ -356,8 +383,9 @@ function grabwp_tenancy_get_server_info() {
 		// Validate domain format before using
 		if ( grabwp_tenancy_validate_domain( $host ) ) {
 			$server_info['host'] = $host;
-		}else{
-			$server_info['host'] = "localhost";
+		} else {
+			$fallback_host = grabwp_tenancy_sanitize_local_network_host( $host );
+			$server_info['host'] = '' !== $fallback_host ? $fallback_host : 'localhost';
 		}
 	}
 

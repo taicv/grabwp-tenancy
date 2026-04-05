@@ -27,7 +27,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'GRABWP_TENANCY_VERSION', '1.0.7' );
 define( 'GRABWP_TENANCY_PLUGIN_FILE', __FILE__ );
 define( 'GRABWP_TENANCY_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'GRABWP_TENANCY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+// Use content_url() to avoid symlink path resolution issues on some hosts
+define( 'GRABWP_TENANCY_PLUGIN_URL', content_url( '/plugins/' . basename( __DIR__ ) . '/' ) );
 define( 'GRABWP_TENANCY_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 
 /**

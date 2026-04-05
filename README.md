@@ -1,6 +1,6 @@
 # GrabWP Tenancy
 
-Multi-tenant WordPress solution with shared MySQL and domain-based routing.
+Multi-tenant WordPress solution with shared MySQL, offering both domain-based and path-based routing.
 
 ## Overview
 
@@ -79,7 +79,9 @@ $tenant = [
 ];
 ```
 
-## Domain Mapping
+## Domain & Path Routing
+
+Tenants can be routed either via distinct domains or via path-based routing using a predefined placeholder (`nodomain.local`) to access them at subdirectories like `/tenant1`.
 
 ```php
 $tenant_mappings = [
@@ -87,17 +89,16 @@ $tenant_mappings = [
         0 => 'tenant1.grabwp.local',
     ],
     'def456' => [
-        0 => 'tenant2-0.grabwp.local',
-        1 => 'tenant2-1.grabwp.local'
+        0 => 'nodomain.local' // Path-based routing example
     ]
 ];
 ```
 
-## Domain Mapping Flowchart
+## Routing Flowchart
 
 ```mermaid
 flowchart TD
-    A[HTTP Request] --> B[Extract domain]
+    A[HTTP Request] --> B[Extract domain or path]
     B --> C[Load tenants.php]
     C --> D[Search tenant mappings]
     D --> E{Found?}
