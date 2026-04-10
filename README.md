@@ -4,7 +4,7 @@ Multi-tenant WordPress solution with shared MySQL, offering both domain-based an
 
 ## Overview
 
-GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential isolation features. This plugin focuses on cost-effective multi-tenancy with shared resources and basic tenant separation.
+GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential isolation features. This plugin focuses on cost-effective multi-tenancy with shared resources and basic tenant separation. New in v1.0.8: **one-click tenant cloning** lets you spin up a new tenant from any existing tenant or the mainsite in seconds.
 
 ## 📦 Download & Resources
 
@@ -17,7 +17,7 @@ GrabWP Tenancy provides the foundation for multi-tenant WordPress with essential
 
 - WordPress 5.0+
 - PHP 7.4+
-- Tested up to WordPress 6.8
+- Tested up to WordPress 6.9
 
 ## Quick Start
 
@@ -131,6 +131,22 @@ flowchart TD
 - **💬 Support Forum**: [WordPress.org Support](https://wordpress.org/support/plugin/grabwp-tenancy/) - Community help
 - **🐛 Bug Reports**: [GitHub Issues](https://github.com/grabwp/grabwp-tenancy/issues) - Technical issues
 - **⭐ Rate Plugin**: [WordPress.org Reviews](https://wordpress.org/plugins/grabwp-tenancy/#reviews) - Share your experience
+
+## Changelog
+
+### v1.0.8
+- **New:** Tenant cloning — duplicate any tenant (or mainsite) to a new tenant with DB copy and file sync
+- **New:** `GRABWP_MAINSITE_ID` (`__mainsite__`) constant for using mainsite as clone source
+- **Enhance:** Mainsite domain detection supports localhost and LAN domains with no TLD
+- **Fix:** Plugin asset URL resolution when the plugin directory is symlinked
+- **Fix:** Tenant ID generation now guarantees uniqueness
+- **Quality:** Normalised all source files to LF line endings
+
+### v1.0.7
+- Path-based routing, status page UI, installer refactor, nonce security, autoloader fix
+
+### v1.0.6
+- Dedicated Status page, one-click MU-plugin and wp-config.php installers, admin notices
 
 ## License
 

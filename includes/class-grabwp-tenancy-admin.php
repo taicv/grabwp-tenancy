@@ -60,6 +60,10 @@ class GrabWP_Tenancy_Admin {
 		// Admin notices
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 
+		// Load clone feature (skips itself when Pro clone is active).
+		require_once GRABWP_TENANCY_PLUGIN_DIR . 'includes/backup/class-grabwp-tenancy-clone-admin.php';
+		GrabWP_Tenancy_Clone_Admin::get_instance();
+
 		// Allow pro plugin to extend
 		do_action( 'grabwp_tenancy_admin_init', $this );
 	}
@@ -113,6 +117,25 @@ class GrabWP_Tenancy_Admin {
 					$result = $this->handle_create_tenant( $domains );
 
 					if ( $result['type'] === 'success' ) {
+						// If clone_source is set, redirect to clone page with new tenant as target.
+						$clone_source = isset( $_POST['clone_source'] ) ? sanitize_key( wp_unslash( $_POST['clone_source'] ) ) : '';
+						if ( $clone_source && ! empty( $result['tenant_id'] ) ) {
+							$clone_page  = class_exists( 'GrabWP_Tenancy_Pro_Clone_Admin' )
+								? 'grabwp-tenancy-pro-clone'
+								: 'grabwp-tenancy-clone';
+							$nonce_action = class_exists( 'GrabWP_Tenancy_Pro_Clone_Admin' )
+								? 'grabwp_tenancy_pro_clone_' . $clone_source
+								: 'grabwp_tenancy_clone_' . $clone_source;
+
+							wp_safe_redirect( add_query_arg( [
+								'page'             => $clone_page,
+								'tenant_id'        => $clone_source,
+								'target_tenant_id' => $result['tenant_id'],
+								'_wpnonce'         => wp_create_nonce( $nonce_action ),
+							], admin_url( 'admin.php' ) ) );
+							exit;
+						}
+
 						$success_nonce = wp_create_nonce( 'grabwp_tenancy_notice' );
 						wp_safe_redirect( admin_url( 'admin.php?page=grabwp-tenancy&message=created&_wpnonce=' . urlencode( $success_nonce ) ) );
 						exit;
@@ -155,7 +178,8 @@ class GrabWP_Tenancy_Admin {
 
 					if ( $result['type'] === 'success' ) {
 						$success_nonce = wp_create_nonce( 'grabwp_tenancy_notice' );
-						wp_safe_redirect( admin_url( 'admin.php?page=grabwp-tenancy&message=updated&_wpnonce=' . urlencode( $success_nonce ) ) );
+						$edit_nonce    = wp_create_nonce( 'grabwp_tenancy_edit' );
+						wp_safe_redirect( admin_url( 'admin.php?page=grabwp-tenancy-edit&tenant_id=' . urlencode( $tenant_id ) . '&message=updated&_wpnonce=' . urlencode( $edit_nonce ) . '&_notice_nonce=' . urlencode( $success_nonce ) ) );
 						exit;
 					} else {
 						// Store error for display
@@ -685,8 +709,9 @@ class GrabWP_Tenancy_Admin {
 			do_action( 'grabwp_tenancy_after_create_tenant', $tenant_id, $validated_domains );
 
 			return array(
-				'message' => __( 'Tenant created successfully.', 'grabwp-tenancy' ),
-				'type'    => 'success',
+				'message'   => __( 'Tenant created successfully.', 'grabwp-tenancy' ),
+				'type'      => 'success',
+				'tenant_id' => $tenant_id,
 			);
 		} else {
 			return array(

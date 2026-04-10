@@ -205,6 +205,17 @@ class GrabWP_Tenancy_List_Table extends WP_List_Table {
 			$this->items[] = $tenant;
 		}
 
+		// Prepend mainsite row on page 1 (only if Pro list table isn't handling it).
+		if ( 1 === $current_page && ! class_exists( 'GrabWP_Tenancy_Pro_List_Table' ) && defined( 'GRABWP_MAINSITE_ID' ) ) {
+			$parsed   = wp_parse_url( site_url() );
+			$main_domain = isset( $parsed['host'] ) ? $parsed['host'] : '';
+			$mainsite = new GrabWP_Tenancy_Tenant(
+				GRABWP_MAINSITE_ID,
+				array( 'domains' => $main_domain ? array( $main_domain ) : array() )
+			);
+			array_unshift( $this->items, $mainsite );
+		}
+
 		// Set pagination args
 		$this->set_pagination_args(
 			array(
@@ -251,6 +262,9 @@ class GrabWP_Tenancy_List_Table extends WP_List_Table {
 	 * @return string
 	 */
 	public function column_tenant_id( $item ) {
+		if ( defined( 'GRABWP_MAINSITE_ID' ) && GRABWP_MAINSITE_ID === $item->get_id() ) {
+			return '<strong>&#11088; ' . esc_html__( 'Main Site', 'grabwp-tenancy' ) . '</strong>';
+		}
 		return '<code>' . esc_html( $item->get_id() ) . '</code>';
 	}
 
@@ -296,6 +310,14 @@ class GrabWP_Tenancy_List_Table extends WP_List_Table {
 	 * @return string
 	 */
 	public function column_actions( $item ) {
+		// Mainsite row: only Visit Site + Clone (added by filter).
+		if ( defined( 'GRABWP_MAINSITE_ID' ) && GRABWP_MAINSITE_ID === $item->get_id() ) {
+			$actions   = array();
+			$actions[] = '<a href="' . esc_url( site_url() ) . '" target="_blank" title="' . esc_attr__( 'Visit Site', 'grabwp-tenancy' ) . '"><span class="dashicons dashicons-admin-home"></span></a>';
+			$actions   = apply_filters( 'grabwp_tenancy_tenant_row_actions', $actions, $item );
+			return implode( ' ', $actions );
+		}
+
 		$actions = array();
 
 		// Determine site URL: prefer real domain, fallback to path URL
