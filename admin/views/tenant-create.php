@@ -17,6 +17,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<p><?php esc_html_e( 'Create a new tenant. A path-based URL will be assigned automatically.', 'grabwp-tenancy' ); ?></p>
 
 	<?php
+	// Clone source passthrough: if coming from clone page, show info and redirect back after creation.
+	$grabwp_clone_source = isset( $_GET['clone_source'] ) ? sanitize_key( wp_unslash( $_GET['clone_source'] ) ) : '';
+	?>
+
+	<?php if ( $grabwp_clone_source ) : ?>
+		<div class="notice notice-info inline" style="margin-bottom: 15px;">
+			<p>
+				<?php
+				$grabwp_clone_source_label = ( defined( 'GRABWP_MAINSITE_ID' ) && GRABWP_MAINSITE_ID === $grabwp_clone_source )
+					? __( 'Main Site', 'grabwp-tenancy' )
+					: $grabwp_clone_source;
+				printf(
+					/* translators: %s: source tenant ID or "Main Site" */
+					esc_html__( 'After creating this tenant, you will be redirected to clone %s into it.', 'grabwp-tenancy' ),
+					'<code>' . esc_html( $grabwp_clone_source_label ) . '</code>'
+				);
+				?>
+			</p>
+		</div>
+	<?php endif; ?>
+
+	<?php
 	// Check for error parameter with nonce verification
 	$grabwp_tenancy_error_nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
 	if ( isset( $_GET['error'] ) && wp_verify_nonce( $grabwp_tenancy_error_nonce, 'grabwp_tenancy_error' ) ) :
@@ -35,6 +57,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<form method="post" class="grabwp-tenancy-form">
 			<?php wp_nonce_field( 'grabwp_tenancy_create' ); ?>
 			<input type="hidden" name="action" value="create_tenant" />
+			<?php if ( $grabwp_clone_source ) : ?>
+				<input type="hidden" name="clone_source" value="<?php echo esc_attr( $grabwp_clone_source ); ?>" />
+			<?php endif; ?>
 			<table class="form-table">
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Domain Setup', 'grabwp-tenancy' ); ?></th>
@@ -85,7 +110,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</table>
 			<p class="submit">
 				<button type="submit" class="button button-primary">
-					<?php esc_html_e( 'Create Tenant', 'grabwp-tenancy' ); ?>
+					<?php
+					echo $grabwp_clone_source
+						? esc_html__( 'Create Tenant & Clone', 'grabwp-tenancy' )
+						: esc_html__( 'Create Tenant', 'grabwp-tenancy' );
+					?>
 				</button>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=grabwp-tenancy' ) ); ?>" class="button" style="margin-left: 10px;">
 					<?php esc_html_e( 'Cancel', 'grabwp-tenancy' ); ?>

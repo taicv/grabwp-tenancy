@@ -19,9 +19,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 		printf( esc_html__( 'Edit Tenant: %s', 'grabwp-tenancy' ), '<code>' . esc_html( $tenant->get_id() ) . '</code>' );
 		?>
 	</h1>
+	<?php
+	/**
+	 * Fires after the Edit Tenant page title, before the form.
+	 * Used by Pro plugin to render tenant action navigation tabs.
+	 *
+	 * @since 1.0.8
+	 * @param object $tenant The tenant object being edited.
+	 */
+	do_action( 'grabwp_tenancy_after_edit_title', $tenant );
+	?>
 	<p><?php esc_html_e( 'Edit tenant settings and domain mappings.', 'grabwp-tenancy' ); ?></p>
 	<?php
-	// Check for error parameter with nonce verification
+	// Check for success parameter with nonce verification.
+	$grabwp_tenancy_notice_nonce = isset( $_GET['_notice_nonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_notice_nonce'] ) ) : '';
+	if ( isset( $_GET['message'] ) && 'updated' === $_GET['message']
+		&& wp_verify_nonce( $grabwp_tenancy_notice_nonce, 'grabwp_tenancy_notice' ) ) :
+		?>
+		<div class="notice notice-success is-dismissible">
+			<p><?php esc_html_e( 'Tenant updated successfully.', 'grabwp-tenancy' ); ?></p>
+		</div>
+	<?php endif; ?>
+
+	<?php
+	// Check for error parameter with nonce verification.
 	$grabwp_tenancy_error_nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
 	if ( isset( $_GET['error'] ) && wp_verify_nonce( $grabwp_tenancy_error_nonce, 'grabwp_tenancy_error' ) ) :
 		?>

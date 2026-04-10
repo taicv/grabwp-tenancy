@@ -420,7 +420,7 @@ function grabwp_tenancy_get_server_info() {
 function grabwp_tenancy_boot_define_abspath() {
 	if ( ! defined( 'ABSPATH' ) ) {
 		// dirname() required — WordPress functions unavailable at this stage
-		define( 'ABSPATH', dirname( __DIR__, 3 ) . '/' );
+		define( 'ABSPATH', dirname( __DIR__ ) . '/wordpress/' );
 	}
 }
 

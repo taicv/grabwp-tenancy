@@ -23,6 +23,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Mainsite pseudo-ID used as clone source.
+if ( ! defined( 'GRABWP_MAINSITE_ID' ) ) {
+	define( 'GRABWP_MAINSITE_ID', '__mainsite__' );
+}
+
 // Define plugin constants
 define( 'GRABWP_TENANCY_VERSION', '1.0.7' );
 define( 'GRABWP_TENANCY_PLUGIN_FILE', __FILE__ );
