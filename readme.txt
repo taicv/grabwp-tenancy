@@ -97,6 +97,14 @@ Yes. GrabWP Tenancy is built for WordPress freelancers and agencies managing mul
 
 == Changelog ==
 
+= 1.0.8 =
+- New: **Tenant Cloning** — clone any existing tenant (or the mainsite) to a new tenant, including database tables and uploaded files with automatic URL replacement.
+- New: Added `GRABWP_MAINSITE_ID` constant (`__mainsite__`) to allow the main site to be used as a clone source.
+- Enhance: Mainsite domain detection now supports localhost and local-network domains that have no TLD extension (e.g., `mysite.local`, bare `localhost`).
+- Fix: Resolved plugin asset URL resolution on hosts where the plugin directory is symlinked — switched to `content_url()` to avoid incorrect absolute paths.
+- Fix: Refactored tenant ID generation to guarantee uniqueness and avoid collisions on busy installations.
+- Quality: Normalised all PHP source files from CRLF to LF line endings.
+
 = 1.0.7 =
 - Major: Introducing **Path-Based Routing**! You can now host tenants on subdirectories/paths (e.g., `example.com/site/abcdef`) without requiring separate domains. This completely eliminates the need for complex domain mappings and serves as a true, lightweight replacement for WordPress Multisite.
 - Enhance: Added comprehensive `.htaccess` diagnostic admin notices specifically tailored for path-based routing support.
