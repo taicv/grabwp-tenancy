@@ -58,7 +58,7 @@ No, this plugin provides multi-tenancy functionality without requiring WordPress
 
 = Do I need a custom domain for every tenant? =
 
-No! With our new path-based routing feature, you can completely bypass complex domain and DNS configurations. You can host tenants dynamically on subdirectories underneath your main site (e.g., `yoursite.com/client-a`).
+No! With our new path-based routing feature, you can completely bypass complex domain and DNS configurations. You can host tenants dynamically on subdirectories underneath your main site (e.g., `yoursite.com/site/client-a`).
 
 = Can I use custom domains for tenants? =
 
