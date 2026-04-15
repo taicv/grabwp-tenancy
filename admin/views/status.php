@@ -183,8 +183,7 @@ $grabwp_tenancy_active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_uns
 		<?php
 		// Show migration warning on all tabs if using legacy path structure.
 		if ( $grabwp_tenancy_path_status['using_old'] ) :
-			$grabwp_tenancy_upload_dir   = wp_upload_dir();
-			$grabwp_tenancy_new_path     = $grabwp_tenancy_upload_dir['basedir'] . '/grabwp-tenancy';
+			$grabwp_tenancy_new_path     = WP_CONTENT_DIR . '/grabwp-tenancy';
 			$grabwp_tenancy_current_path = $grabwp_tenancy_path_status['current_base'];
 			?>
 		<div class="notice notice-warning" style="margin: 15px 0;">

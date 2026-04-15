@@ -4,7 +4,7 @@ Tags: multi-tenant, multisite, multi site, multi domain, saas
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.0.8
+Stable tag: 1.0.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Plugin URI: https://grabwp.com
@@ -96,6 +96,15 @@ Yes. GrabWP Tenancy is built for WordPress freelancers and agencies managing mul
 **📖 Need detailed setup instructions?** Visit our [complete documentation](https://grabwp.com) for step-by-step guides and troubleshooting.
 
 == Changelog ==
+
+= 1.0.9 =
+- Fix: Default tenant data directory moved from `wp-content/uploads/grabwp-tenancy` to `wp-content/grabwp-tenancy` (outside uploads) to prevent direct web access to tenant data. Existing installs that already use the uploads path are preserved automatically — no migration needed.
+- Fix: Corrected legacy-path migration notice in the Status page to use `WP_CONTENT_DIR` directly instead of `wp_upload_dir()`, matching the new default path.
+- Fix: Downgraded oversized "Clone to existing site" / "Clone to new site" hero buttons on the clone page to standard buttons for visual consistency.
+- Enhance: Plugin/theme admin bar nodes (`plugins`, `themes`) are now removed on tenant sites when the corresponding Hide Plugin Management / Hide Theme Management settings are enabled, closing a gap where the toolbar still exposed those links.
+- Enhance: Tenant create page UX — the first domain field is now auto-filled with a suggested domain (`tenant-{6digits}.{hostname}`); a new **Clear** button lets users wipe the field quickly; the domain input grows up to 500 px wide; and the domain section is visually indented under its radio button.
+- Enhance: GrabWP Tenancy admin menu position moved higher (position 3) so it appears near the top of the sidebar.
+- Change: Default values for **Hide Plugin Management** and **Hide Theme Management** settings changed from `true` to `false` for fresh installs, giving new tenants full access by default until explicitly restricted.
 
 = 1.0.8 =
 - New: **Tenant Cloning** — clone any existing tenant (or the mainsite) to a new tenant, including database tables and uploaded files with automatic URL replacement.

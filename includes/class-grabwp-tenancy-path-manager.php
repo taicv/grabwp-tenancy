@@ -80,7 +80,7 @@ if ( ! function_exists( 'grabwp_tenancy_validate_tenant_id' ) ) {
  *
  * Handles all file and directory path resolution with support for:
  * - Backward compatibility (old wp-content/grabwp structure)
- * - New WordPress-compliant structure (uploads/grabwp-tenancy)
+ * - New structure outside uploads (wp-content/grabwp-tenancy)
  * - Future user-configurable paths
  */
 class GrabWP_Tenancy_Path_Manager {
@@ -112,9 +112,8 @@ class GrabWP_Tenancy_Path_Manager {
 			return WP_CONTENT_DIR . '/uploads/grabwp-tenancy';
 		}
 
-		// 4. Default to new WordPress-compliant structure
-		$upload_dir = wp_upload_dir();
-		return $upload_dir['basedir'] . '/grabwp-tenancy';
+		// 4. Default to new structure outside uploads.
+		return WP_CONTENT_DIR . '/grabwp-tenancy';
 	}
 
 	/**

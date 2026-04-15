@@ -65,38 +65,39 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><?php esc_html_e( 'Domain Setup', 'grabwp-tenancy' ); ?></th>
 					<td>
 						<fieldset>
-							<label style="display: block; margin-bottom: 8px;">
-								<input type="radio" name="domain_option" value="has_domain" checked />
-								<?php esc_html_e( 'I have a domain', 'grabwp-tenancy' ); ?>
-							</label>
-							<label style="display: block; margin-bottom: 8px;">
-								<input type="radio" name="domain_option" value="map_later" />
-								<?php esc_html_e( "I'll set up a domain later", 'grabwp-tenancy' ); ?>
-							</label>
-						</fieldset>
-
-						<!-- Domain input section (shown when "I have a domain" selected) -->
-						<div id="grabwp-domain-section" style="margin-top: 10px;">
-							<div class="grabwp-domain-inputs">
-								<div class="grabwp-domain-input">
-									<input type="text" name="domains[]" placeholder="<?php esc_attr_e( 'Enter domain (e.g. mysite.com)', 'grabwp-tenancy' ); ?>" style="width: 300px;" />
-									<button type="button" class="button grabwp-remove-domain" style="margin-left: 10px;"><?php esc_html_e( 'Remove', 'grabwp-tenancy' ); ?></button>
+							<div style="margin-bottom: 16px;">
+								<label style="display: block; margin-bottom: 8px;">
+									<input type="radio" name="domain_option" value="has_domain" checked />
+									<?php esc_html_e( 'I have a domain', 'grabwp-tenancy' ); ?>
+								</label>
+								<!-- Domain input section (shown when "I have a domain" selected) -->
+								<div id="grabwp-domain-section" style="margin: 4px 0 0 24px;">
+									<div class="grabwp-domain-inputs">
+										<div class="grabwp-domain-input">
+											<input type="text" name="domains[]" placeholder="<?php esc_attr_e( 'Enter domain (e.g. mysite.com)', 'grabwp-tenancy' ); ?>" style="width: auto; max-width: 500px;" />
+											<button type="button" class="button grabwp-clear-domain" style="margin-left: 10px;"><?php esc_html_e( 'Clear', 'grabwp-tenancy' ); ?></button>
+											<button type="button" class="button grabwp-remove-domain" style="margin-left: 10px;"><?php esc_html_e( 'Remove', 'grabwp-tenancy' ); ?></button>
+										</div>
+									</div>
+									
+									<p class="description"><?php esc_html_e( 'Enter without http:// or www (e.g. mysite.com, blog.mysite.com)', 'grabwp-tenancy' ); ?></p>
 								</div>
 							</div>
-							<button type="button" class="button grabwp-add-domain" style="margin-top: 10px;">
-								<?php esc_html_e( 'Add New Domain', 'grabwp-tenancy' ); ?>
-							</button>
-							<p class="description"><?php esc_html_e( 'Enter without http:// or www (e.g. mysite.com, blog.mysite.com)', 'grabwp-tenancy' ); ?></p>
-						</div>
-
-						<!-- Path-only info (shown when "I'll set up a domain later" selected) -->
-						<div id="grabwp-no-domain-section" class="grabwp-path-url-info" style="margin-top: 10px; display: none;">
-							<p>
-								<strong><?php esc_html_e( 'Your site will be accessible at:', 'grabwp-tenancy' ); ?></strong><br />
-								<code><?php echo esc_html( site_url( '/site/{tenant-id}/' ) ); ?></code>
-							</p>
-							<p class="description"><?php esc_html_e( 'You can add a domain anytime from the tenant edit page.', 'grabwp-tenancy' ); ?></p>
-						</div>
+							<div>
+								<label style="display: block; margin-bottom: 8px;">
+									<input type="radio" name="domain_option" value="map_later" />
+									<?php esc_html_e( "I'll set up a domain later", 'grabwp-tenancy' ); ?>
+								</label>
+								<!-- Path-only info (shown when "I'll set up a domain later" selected) -->
+								<div id="grabwp-no-domain-section" class="grabwp-path-url-info" style="margin: 4px 0 0 24px; display: none;">
+									<p>
+										<strong><?php esc_html_e( 'Your site will be accessible at:', 'grabwp-tenancy' ); ?></strong><br />
+										<code><?php echo esc_html( site_url( '/site/{tenant-id}/' ) ); ?></code>
+									</p>
+									<p class="description"><?php esc_html_e( 'You can add a domain anytime from the tenant edit page.', 'grabwp-tenancy' ); ?></p>
+								</div>
+							</div>
+						</fieldset>
 					</td>
 				</tr>
 				<?php

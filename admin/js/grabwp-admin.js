@@ -12,6 +12,7 @@
 
 	document.addEventListener( 'DOMContentLoaded', function () {
 		initDomainManagement();
+		initCreatePageHelpers();
 		initCopyToClipboard();
 		initAjaxInstallButton( {
 			btnId:        'grabwp-install-mu-btn',
@@ -93,6 +94,45 @@
 		}
 		msg.style.color = color;
 		msg.textContent = text;
+	}
+
+	/* ---------------------------------------------------------------
+	 * Create-page helpers: auto-fill tenant domain + clear button
+	 * ------------------------------------------------------------- */
+
+	/**
+	 * Generate a suggested tenant domain: tenant-{6 random digits}.{hostname}
+	 *
+	 * @returns {string}
+	 */
+	function generateTenantDomain() {
+		var digits   = Math.floor( 100000 + Math.random() * 900000 ).toString();
+		var hostname = window.location.hostname;
+		return 'tenant-' + digits + '.' + hostname;
+	}
+
+	function initCreatePageHelpers() {
+		// Auto-fill the first empty domain input on the create page.
+		var firstInput = document.querySelector( '.grabwp-domain-inputs input[name="domains[]"]' );
+		if ( firstInput && firstInput.value.trim() === '' ) {
+			firstInput.value = generateTenantDomain();
+		}
+
+		// Clear button: wipe the nearest domains[] input inside the same row.
+		document.addEventListener( 'click', function ( e ) {
+			if ( ! e.target.classList.contains( 'grabwp-clear-domain' ) ) {
+				return;
+			}
+			var row   = e.target.closest( '.grabwp-domain-input' );
+			if ( ! row ) {
+				return;
+			}
+			var input = row.querySelector( 'input[name="domains[]"]' );
+			if ( input ) {
+				input.value = '';
+				input.focus();
+			}
+		} );
 	}
 
 	/* ---------------------------------------------------------------

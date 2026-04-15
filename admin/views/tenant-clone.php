@@ -58,11 +58,11 @@ $create_new_url = add_query_arg( [
 	<div id="grabwp-clone-choice" <?php echo $auto_target ? 'style="display:none;"' : ''; ?>>
 		<h3><?php esc_html_e( 'Choose clone target:', 'grabwp-tenancy' ); ?></h3>
 		<div style="display:flex; gap:16px; margin:16px 0;">
-			<button type="button" id="clone-to-existing-btn" class="button button-hero" style="display:flex; flex-direction:column; align-items:center; padding:16px 24px;">
+			<button type="button" id="clone-to-existing-btn" class="button" style="display:flex; flex-direction:column; align-items:center; padding:16px 24px;">
 				<span class="dashicons dashicons-admin-page" style="font-size:24px; width:24px; height:24px; margin-bottom:6px;"></span>
 				<?php esc_html_e( 'Clone to existing site', 'grabwp-tenancy' ); ?>
 			</button>
-			<a href="<?php echo esc_url( $create_new_url ); ?>" class="button button-hero" style="display:flex; flex-direction:column; align-items:center; padding:16px 24px; text-decoration:none;">
+			<a href="<?php echo esc_url( $create_new_url ); ?>" class="button" style="display:flex; flex-direction:column; align-items:center; padding:16px 24px; text-decoration:none;">
 				<span class="dashicons dashicons-plus-alt" style="font-size:24px; width:24px; height:24px; margin-bottom:6px;"></span>
 				<?php esc_html_e( 'Clone to new site', 'grabwp-tenancy' ); ?>
 			</a>

@@ -54,10 +54,14 @@ if ( ! defined( 'GRABWP_TENANCY_BASE_DIR' ) ) {
 
 	// Base-only fallback (no pro plugin installed).
 	if ( file_exists( ABSPATH . 'wp-content/grabwp/tenants.php' ) ) {
-		// Legacy path in 1.0.0
+		// Legacy v1.0.0 path.
 		define( 'GRABWP_TENANCY_BASE_DIR', ABSPATH . 'wp-content/grabwp' );
-	} else {
+	} elseif ( is_dir( ABSPATH . 'wp-content/uploads/grabwp-tenancy' ) ) {
+		// Legacy path (existing install under uploads) — preserve to avoid disruption.
 		define( 'GRABWP_TENANCY_BASE_DIR', ABSPATH . 'wp-content/uploads/grabwp-tenancy' );
+	} else {
+		// New default: outside uploads for security.
+		define( 'GRABWP_TENANCY_BASE_DIR', ABSPATH . 'wp-content/grabwp-tenancy' );
 	}
 	define( 'GRABWP_TENANCY_DIRS_FROM_PLUGIN', true );
 }

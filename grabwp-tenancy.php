@@ -230,6 +230,7 @@ final class GrabWP_Tenancy {
 		// Remove admin menus for plugin/theme management if configured.
 		if ( $settings->get( 'hide_plugin_management' ) || $settings->get( 'hide_theme_management' ) ) {
 			add_action( 'admin_menu', array( $this, 'remove_tenant_admin_menus' ), 999 );
+			add_action( 'admin_bar_menu', array( $this, 'remove_tenant_admin_bar_nodes' ), 999 );
 		}
 	}
 
@@ -247,6 +248,30 @@ final class GrabWP_Tenancy {
 
 		if ( $settings->get( 'hide_theme_management' ) ) {
 			remove_menu_page( 'themes.php' );
+		}
+	}
+
+	/**
+	 * Remove plugin/theme toolbar items on tenant sites (mirrors remove_tenant_admin_menus).
+	 *
+	 * Core registers node IDs `plugins` and `themes` on the admin bar (e.g. under the site name on the front end).
+	 *
+	 * @since 1.1.0
+	 * @param WP_Admin_Bar $wp_admin_bar Admin bar instance.
+	 */
+	public function remove_tenant_admin_bar_nodes( $wp_admin_bar ) {
+		if ( ! $wp_admin_bar instanceof WP_Admin_Bar ) {
+			return;
+		}
+
+		$settings = GrabWP_Tenancy_Settings::get_instance();
+
+		if ( $settings->get( 'hide_plugin_management' ) ) {
+			$wp_admin_bar->remove_node( 'plugins' );
+		}
+
+		if ( $settings->get( 'hide_theme_management' ) ) {
+			$wp_admin_bar->remove_node( 'themes' );
 		}
 	}
 

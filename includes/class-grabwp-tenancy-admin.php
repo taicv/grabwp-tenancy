@@ -263,7 +263,7 @@ class GrabWP_Tenancy_Admin {
 			'grabwp-tenancy',
 			array( $this, 'admin_page' ),
 			'dashicons-admin-multisite',
-			30
+			3
 		);
 
 		add_submenu_page(

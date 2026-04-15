@@ -75,8 +75,8 @@ class GrabWP_Tenancy_Settings {
 		return array(
 			'disallow_file_mods' => true,
 			'disallow_file_edit' => true,
-			'hide_plugin_management'     => true,
-			'hide_theme_management'      => true,
+			'hide_plugin_management'     => false,
+			'hide_theme_management'      => false,
 			'hide_grabwp_plugins'        => true,
 		);
 	}
