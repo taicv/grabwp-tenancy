@@ -206,7 +206,12 @@ class GrabWP_Tenancy_Loader {
 	}
 
 	/**
-	 * Recursively remove directory
+	 * Recursively remove directory, safely handling symlinks.
+	 *
+	 * WP_Filesystem's rmdir() follows symlinks when deleting recursively, which
+	 * would destroy the original shared plugin/theme that a tenant symlink points
+	 * to. We therefore walk the tree manually: symlinks are unlink()ed (not
+	 * followed), real files/dirs are handled by WP_Filesystem.
 	 *
 	 * @param string $dir Directory path
 	 * @return bool Success status
@@ -224,12 +229,47 @@ class GrabWP_Tenancy_Loader {
 			WP_Filesystem();
 		}
 
-		if ( $wp_filesystem && $wp_filesystem->is_dir( $dir ) ) {
-			return $wp_filesystem->rmdir( $dir, true );
+		if ( ! $wp_filesystem ) {
+			return false;
 		}
 
-		// If filesystem API is not available, return false
-		// This ensures we don't use direct PHP filesystem calls
+		// Walk the directory manually so we can detect symlinks before
+		// WP_Filesystem sees them (is_dir() follows symlinks in PHP).
+		$items = @scandir( $dir );
+		if ( false === $items ) {
+			return false;
+		}
+
+		$success = true;
+		foreach ( $items as $item ) {
+			if ( '.' === $item || '..' === $item ) {
+				continue;
+			}
+
+			$path = $dir . '/' . $item;
+
+			if ( is_link( $path ) ) {
+				// Remove only the symlink — never follow it into the target.
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+				if ( ! @unlink( $path ) ) {
+					$success = false;
+				}
+			} elseif ( is_dir( $path ) ) {
+				if ( ! $this->recursive_rmdir( $path ) ) {
+					$success = false;
+				}
+			} else {
+				if ( ! $wp_filesystem->delete( $path ) ) {
+					$success = false;
+				}
+			}
+		}
+
+		// Remove the (now-empty) directory itself.
+		if ( $success ) {
+			return $wp_filesystem->rmdir( $dir, false );
+		}
+
 		return false;
 	}
 
